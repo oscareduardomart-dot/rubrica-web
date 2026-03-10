@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.json">
+<title>Rúbrica — Firma PDF</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@700&family=Bebas+Neue&family=Pacifico&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f5f6fa;--s1:#fff;--s2:#f0f2f8;--s3:#e6e9f4;
+  --bd:#dde1ef;--acc:#2563eb;--acc2:#1d4ed8;
+  --grn:#059669;--red:#ef4444;--ylw:#d97706;
+  --tx:#1a2035;--tx2:#4b5680;--tx3:#8892aa;
+  --sh:0 1px 4px rgba(20,30,60,.08),0 2px 8px rgba(20,30,60,.05);
+  --shl:0 8px 32px rgba(20,30,60,.12),0 2px 8px rgba(20,30,60,.07);
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+}
+body.dark{
+  --bg:#0d1017;--s1:#161b27;--s2:#1c2233;--s3:#222840;
+  --bd:#2a3350;--tx:#e2e6f5;--tx2:#8892aa;--tx3:#4a5370;
+}
+html,body{height:100%;font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--tx);overflow:hidden}
+
+/* ── LANDING ─────────────────────────────────────────────────────────── */
+#landing{position:fixed;inset:0;background:var(--bg);overflow-y:auto;z-index:200;display:none}
+#landing.on{display:block}
+.ln{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;padding:13px 20px;background:var(--s1);border-bottom:1px solid var(--bd);box-shadow:var(--sh);z-index:5}
+.logo{display:flex;align-items:center;gap:7px;font-size:1.05rem;font-weight:800;color:var(--acc);letter-spacing:-.02em}
+.lhero{max-width:640px;margin:0 auto;padding:56px 20px 40px;text-align:center}
+.lbadge{display:inline-block;padding:4px 13px;border-radius:100px;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.18);color:var(--acc);font-size:.75rem;font-weight:700;margin-bottom:18px}
+.lhero h1{font-size:clamp(1.9rem,5vw,3rem);font-weight:800;line-height:1.15;letter-spacing:-.03em;margin-bottom:14px}
+.lhero h1 span{color:var(--acc)}
+.lhero p{font-size:.95rem;color:var(--tx2);line-height:1.7;max-width:440px;margin:0 auto 28px}
+.lbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.btn-p{display:inline-flex;align-items:center;gap:7px;padding:12px 24px;border-radius:9px;border:none;background:var(--acc);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;box-shadow:0 3px 14px rgba(37,99,235,.32);transition:all .16s;position:relative;overflow:hidden}
+.btn-p:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn-p input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.btn-o{display:inline-flex;align-items:center;gap:7px;padding:12px 24px;border-radius:9px;border:1.5px solid var(--bd);background:var(--s1);color:var(--tx);font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .16s}
+.btn-o:hover{border-color:var(--acc);color:var(--acc)}
+.lhint{font-size:.74rem;color:var(--tx3)}
+.lfeats{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;max-width:820px;margin:0 auto;padding:0 16px 56px}
+.lf{background:var(--s1);border:1px solid var(--bd);border-radius:13px;padding:20px;display:flex;flex-direction:column;gap:9px;box-shadow:var(--sh);transition:all .18s}
+.lf:hover{box-shadow:var(--shl);transform:translateY(-2px)}
+.lfi{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.lf h3{font-size:.87rem;font-weight:700}
+.lf p{font-size:.78rem;color:var(--tx2);line-height:1.6}
+.lfooter{text-align:center;padding:24px 16px calc(24px + var(--sb));border-top:1px solid var(--bd)}
+.lfooter p{font-size:.76rem;color:var(--tx3);margin-bottom:12px}
+
+/* ── APP ─────────────────────────────────────────────────────────────── */
+#app{display:none;width:100%;height:100dvh;height:100vh;flex-direction:column}
+#app.on{display:flex}
+
+/* Topbar */
+#topbar{display:flex;align-items:center;gap:6px;padding:calc(var(--st)+7px) 10px 7px;background:var(--s1);border-bottom:1px solid var(--bd);box-shadow:var(--sh);flex-shrink:0;min-height:calc(var(--st)+50px);z-index:30}
+.tlogo{display:flex;align-items:center;gap:6px;font-size:.95rem;font-weight:800;color:var(--acc);letter-spacing:-.02em;flex-shrink:0;margin-right:2px}
+.tsp{flex:1}
+.tbtn{display:flex;align-items:center;justify-content:center;gap:5px;height:34px;min-width:34px;padding:0 9px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--tx2);cursor:pointer;font-size:.76rem;font-weight:600;white-space:nowrap;flex-shrink:0;transition:all .14s}
+.tbtn:hover{background:var(--s3);border-color:var(--acc);color:var(--acc)}
+.tbtn.acc{background:var(--acc);border-color:var(--acc);color:#fff}
+.tbtn.acc:hover{background:var(--acc2)}
+/* label-as-button for file input */
+label.tbtn{cursor:pointer;position:relative;overflow:hidden}
+label.tbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+
+/* Toolbar */
+#tb{display:flex;align-items:center;gap:2px;padding:4px 8px;height:42px;background:var(--s1);border-bottom:1px solid var(--bd);flex-shrink:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#tb::-webkit-scrollbar{display:none}
+.tbut{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:42px;height:32px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--tx3);cursor:pointer;font-size:.5rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;transition:all .13s;flex-shrink:0;padding:0 4px}
+.tbut svg{width:13px;height:13px;pointer-events:none}
+.tbut.on{background:rgba(37,99,235,.1);color:var(--acc);border-color:rgba(37,99,235,.22)}
+.tbut:not(.on):hover{background:var(--s2);color:var(--tx)}
+.tsep{width:1px;height:18px;background:var(--bd);flex-shrink:0;margin:0 2px}
+.cdot{width:17px;height:17px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:.13s;flex-shrink:0}
+.cdot.on{border-color:var(--acc);box-shadow:0 0 0 2px var(--s1),0 0 0 3.5px var(--acc)}
+#sw{-webkit-appearance:none;width:54px;height:3px;border-radius:2px;background:var(--bd);outline:none;cursor:pointer;flex-shrink:0}
+#sw::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--acc);cursor:pointer;border:2px solid var(--s1)}
+.znav{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.znav button{width:21px;height:21px;border-radius:5px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center}
+.znav button:hover{background:var(--s3)}
+#zlbl{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--tx2);min-width:30px;text-align:center}
+.pnav{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.pnav button{width:21px;height:21px;border-radius:5px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+.pnav button:disabled{opacity:.3;cursor:default}
+.pnav button:not(:disabled):hover{background:var(--s3)}
+#plbl{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--tx2);min-width:36px;text-align:center}
+
+/* Main */
+#main{flex:1;overflow:auto;background:var(--s3);display:flex;justify-content:center;align-items:flex-start;padding:14px;position:relative;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+#main::-webkit-scrollbar{width:5px;height:5px}
+#main::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+
+/* Drop zone */
+#dz{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;width:100%;height:100%;min-height:240px;border:2px dashed var(--bd);border-radius:14px;background:var(--s1);text-align:center;padding:28px 18px;transition:.2s}
+#dz.over{border-color:var(--acc);background:rgba(37,99,235,.04)}
+.dzic{width:64px;height:64px;border-radius:15px;background:rgba(37,99,235,.08);border:1.5px solid rgba(37,99,235,.16);display:flex;align-items:center;justify-content:center;color:var(--acc)}
+.dztit{font-size:1.15rem;font-weight:800;color:var(--tx)}
+.dzsub{font-size:.8rem;color:var(--tx2);max-width:220px;line-height:1.6}
+.dzact{display:flex;flex-direction:column;gap:9px;width:100%;max-width:250px}
+
+/* Open PDF button in dropzone */
+label.dzbtn{display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 20px;border-radius:9px;background:var(--acc);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(37,99,235,.28);transition:.16s;position:relative;overflow:hidden;border:none;width:100%}
+label.dzbtn:hover{background:var(--acc2)}
+label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0}
+.scanbtn{display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 20px;border-radius:9px;border:1.5px solid rgba(5,150,105,.28);background:rgba(5,150,105,.06);color:var(--grn);font-family:'Plus Jakarta Sans',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;width:100%;transition:.16s}
+.scanbtn:hover{background:rgba(5,150,105,.12)}
+
+/* Canvas wrap — CRITICAL: no CSS width/height on canvases */
+#cw{display:none;position:relative}
+#pc{display:block}
+#ac{position:absolute;top:0;left:0;pointer-events:none}
+#xc{position:absolute;top:0;left:0;touch-action:none;cursor:crosshair}
+
+/* Place overlay */
+#ov{display:none;position:fixed;top:0;left:0;right:0;padding:calc(var(--st)+8px) 14px 10px;background:linear-gradient(180deg,rgba(5,10,25,.9) 60%,transparent);z-index:40;text-align:center;pointer-events:none}
+#ov.on{display:block}
+#ovmsg{font-size:.8rem;font-weight:700;color:#fff;margin-bottom:7px}
+.ovcfm{pointer-events:all;padding:7px 22px;border-radius:100px;border:none;background:var(--grn);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;display:none;margin:2px;box-shadow:0 2px 10px rgba(5,150,105,.35)}
+
+/* Dock */
+#dock{display:none;position:fixed;bottom:calc(52px + var(--sb) + 10px);left:50%;transform:translateX(-50%);align-items:center;gap:2px;background:var(--s1);border:1px solid var(--bd);border-radius:18px;padding:5px 8px;box-shadow:var(--shl);z-index:20}
+#dock.on{display:flex}
+.dbtn{width:38px;height:38px;border-radius:9px;border:1px solid transparent;background:transparent;color:var(--tx3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.13s}
+.dbtn svg{width:17px;height:17px;pointer-events:none}
+.dbtn.on{background:rgba(37,99,235,.1);color:var(--acc);border-color:rgba(37,99,235,.22)}
+.dbtn:not(.on):hover,.dbtn:not(.on):active{background:var(--s2);color:var(--tx)}
+.dsep{width:1px;height:18px;background:var(--bd);margin:0 2px;flex-shrink:0}
+
+/* Ad banner */
+#adbar{position:fixed;bottom:0;left:0;right:0;height:calc(52px + var(--sb));padding-bottom:var(--sb);background:var(--s1);border-top:1px solid var(--bd);display:flex;align-items:center;justify-content:center;z-index:25}
+#adbar::before{content:'PUBLICIDAD';position:absolute;top:3px;right:5px;font-size:.46rem;color:var(--tx3);font-family:'JetBrains Mono',monospace;letter-spacing:.1em}
+#app.on:not(.pro){padding-bottom:calc(52px + var(--sb))}
+
+/* ── MODALS ──────────────────────────────────────────────────────────── */
+.backdrop{display:none;position:fixed;inset:0;background:rgba(5,10,25,.65);z-index:100;align-items:flex-end;justify-content:center;backdrop-filter:blur(5px)}
+.backdrop.on{display:flex}
+@media(min-width:600px){.backdrop{align-items:center;padding:16px}}
+.sheet{background:var(--s1);border:1px solid var(--bd);border-radius:18px 18px 0 0;padding:0 0 calc(var(--sb)+14px);width:100%;max-width:500px;box-shadow:var(--shl);animation:sup .24s cubic-bezier(.32,1.1,.32,1)}
+@media(min-width:600px){.sheet{border-radius:14px}}
+@keyframes sup{from{transform:translateY(50px);opacity:0}to{transform:translateY(0);opacity:1}}
+.shdl{width:34px;height:4px;border-radius:2px;background:var(--bd);margin:11px auto 12px}
+.shh{display:flex;align-items:center;justify-content:space-between;padding:0 16px 11px;border-bottom:1px solid var(--bd)}
+.sht{font-size:.92rem;font-weight:700}
+.shx{width:26px;height:26px;border-radius:6px;border:1px solid var(--bd);background:var(--s2);color:var(--tx2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:.13s}
+.shx:hover{background:var(--s3)}
+.sha{display:flex;gap:7px;padding:0 14px 3px}
+.shb{flex:1;padding:11px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'Plus Jakarta Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;transition:.13s}
+.shb:hover{background:var(--s3)}
+.shb.p{background:var(--acc);border-color:var(--acc);color:#fff}
+.shb.p:hover{background:var(--acc2)}
+
+/* Sig modal */
+#sigcv{display:block;margin:10px auto;border-radius:9px;border:1.5px solid var(--bd);background:#fff;cursor:crosshair;touch-action:none}
+.sigcs{display:flex;gap:7px;align-items:center;padding:3px 16px 9px}
+.sigcs span{font-size:.74rem;color:var(--tx2)}
+.savsigs{display:flex;gap:7px;padding:8px 14px 2px;overflow-x:auto;scrollbar-width:none}
+.savsigs::-webkit-scrollbar{display:none}
+.savsig{flex-shrink:0;border:2px solid var(--bd);border-radius:7px;background:#fff;cursor:pointer;transition:.12s;position:relative}
+.savsig:hover{border-color:var(--acc)}
+.ssdel{position:absolute;top:-5px;right:-5px;width:15px;height:15px;border-radius:50%;background:var(--red);color:#fff;font-size:.55rem;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--s1)}
+
+/* Text modal */
+#txtin{width:100%;min-height:50px;background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:9px 12px;color:var(--tx);font-size:.95rem;outline:none;resize:none;line-height:1.4;font-family:'Plus Jakarta Sans',sans-serif}
+.fpills{display:flex;gap:5px;overflow-x:auto;padding:3px 0 7px;scrollbar-width:none}
+.fpills::-webkit-scrollbar{display:none}
+.fp{padding:5px 12px;border-radius:100px;border:1px solid var(--bd);background:var(--s2);color:var(--tx2);font-size:.73rem;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:.13s}
+.fp.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+
+/* Pro modal */
+.probadge{margin:22px auto 0;width:58px;height:58px;border-radius:14px;background:linear-gradient(135deg,#f59e0b,#f97316);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.7rem}
+.protit{text-align:center;font-size:1.1rem;font-weight:800;padding:10px 18px 3px}
+.prosub{text-align:center;font-size:.82rem;color:var(--tx2);padding:0 22px 18px;line-height:1.6}
+
+/* ── SCANNER ──────────────────────────────────────────────────────────── */
+#scan{display:none;position:fixed;inset:0;background:#000;z-index:250;flex-direction:column}
+#scan.on{display:flex}
+#svid{width:100%;flex:1;object-fit:cover;display:block}
+#sbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px calc(10px + var(--sb));background:rgba(0,0,0,.82);flex-shrink:0}
+#sclosebtn{width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(255,255,255,.3);background:rgba(0,0,0,.35);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+#shint{font-size:.73rem;color:rgba(255,255,255,.65);font-family:'JetBrains Mono',monospace;text-align:center;flex:1}
+#sshoot{width:58px;height:58px;border-radius:50%;border:3.5px solid #fff;background:rgba(255,255,255,.16);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.12s}
+#sshoot:active{transform:scale(.9)}
+#flashbtn{position:absolute;top:calc(var(--st)+10px);right:12px;width:34px;height:34px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);background:rgba(0,0,0,.35);color:rgba(255,255,255,.65);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5}
+#flashbtn.on{background:rgba(255,220,0,.28);border-color:rgba(255,220,0,.8);color:#ffdc00}
+
+/* ── CROP ─────────────────────────────────────────────────────────────── */
+#crop{display:none;position:fixed;inset:0;background:#000;z-index:260;flex-direction:column}
+#crop.on{display:flex}
+#cropwrap{position:relative;flex:1;overflow:hidden;background:#111}
+#cropcv{position:absolute;display:block}
+#cropsvg{position:absolute;top:0;left:0;pointer-events:none;z-index:2;overflow:visible}
+.cph{width:30px;height:30px;border-radius:50%;background:var(--acc);border:3px solid #fff;position:absolute;transform:translate(-50%,-50%);cursor:grab;touch-action:none;box-shadow:0 2px 10px rgba(0,0,0,.55);z-index:10}
+#cropbar{padding:12px 14px calc(12px + var(--sb));background:rgba(0,0,0,.88);flex-shrink:0;display:flex;flex-direction:column;gap:9px}
+#cropinfo{font-size:.68rem;color:rgba(255,255,255,.45);font-family:'JetBrains Mono',monospace;text-align:center}
+.filrow{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none}
+.filrow::-webkit-scrollbar{display:none}
+.filp{padding:6px 13px;border-radius:100px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:rgba(255,255,255,.65);font-size:.7rem;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:.14s}
+.filp.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.cropact{display:flex;gap:9px}
+.cropbtn{flex:1;padding:12px;border-radius:9px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.83rem;font-weight:600;cursor:pointer;transition:.14s}
+.cropbtn:hover{background:rgba(255,255,255,.13)}
+.cropbtn.p{background:var(--acc);border-color:var(--acc)}
+.cropbtn.p:hover{background:var(--acc2)}
+
+/* ── TOAST / LOADING ──────────────────────────────────────────────────── */
+#toast{position:fixed;bottom:calc(var(--sb)+66px);left:50%;transform:translateX(-50%) translateY(50px);background:var(--tx);color:var(--bg);padding:9px 20px;border-radius:100px;font-size:.8rem;font-weight:600;box-shadow:var(--shl);pointer-events:none;white-space:nowrap;z-index:500;transition:transform .28s cubic-bezier(.34,1.4,.64,1)}
+#toast.on{transform:translateX(-50%) translateY(0)}
+#toast.ok{background:var(--grn);color:#fff}
+#toast.err{background:var(--red);color:#fff}
+#load{display:none;position:fixed;inset:0;background:rgba(5,10,25,.8);z-index:600;flex-direction:column;align-items:center;justify-content:center;gap:13px;backdrop-filter:blur(4px)}
+#load.on{display:flex}
+.spin{width:38px;height:38px;border-radius:50%;border:3px solid var(--bd);border-top-color:var(--acc);animation:sp .65s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+#loadmsg{font-size:.78rem;color:rgba(255,255,255,.65);font-family:'JetBrains Mono',monospace}
+
+/* ── THUMBS ────────────────────────────────────────────────────────────── */
+#thumbs{position:fixed;left:0;top:0;bottom:calc(52px + var(--sb));width:68px;background:var(--s1);border-right:1px solid var(--bd);z-index:15;display:none;flex-direction:column;align-items:center;padding:7px 0;gap:5px;overflow-y:auto;scrollbar-width:none}
+#thumbs.on{display:flex}
+#thumbs::-webkit-scrollbar{display:none}
+.thi{width:50px;border-radius:4px;overflow:hidden;cursor:pointer;border:2px solid transparent;flex-shrink:0;transition:.11s}
+.thi.on{border-color:var(--acc)}
+.thi canvas{width:100%;display:block}
+.thn{font-size:.48rem;text-align:center;color:var(--tx3);padding:2px 0;font-family:'JetBrains Mono',monospace}
+
+/* ── DESKTOP ────────────────────────────────────────────────────────────── */
+#rc{display:flex;flex-direction:column;flex:1;overflow:hidden;min-width:0}
+@media(min-width:768px){
+  #app.on{flex-direction:row}
+  #topbar{flex-direction:column;align-items:flex-start;width:190px;min-width:190px;height:100%;padding:18px 10px 14px;border-bottom:none;border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;gap:3px;min-height:unset}
+  .tlogo{margin-bottom:12px}
+  .tsp{display:none}
+  .tbtn{width:100%;justify-content:flex-start}
+  #ssep{display:block!important;width:100%;height:1px;background:var(--bd);margin:5px 0}
+  #adbar{position:static;height:46px}
+  #app.on:not(.pro){padding-bottom:0}
+  #thumbs{bottom:46px}
+  .backdrop{align-items:center;padding:16px}
+  .sheet{border-radius:14px}
+}
+@media(min-width:768px) and (max-width:1023px){
+  #topbar{width:52px;padding:14px 8px}
+  .tlogo span{display:none}
+  .tbtn{width:36px;padding:0;justify-content:center}
+  .tbtn span{display:none}
+  #ssep{display:none!important}
+}
+
+/* selección */
+#selbox{position:absolute;display:none;z-index:6;border:2.5px solid #2563eb;box-sizing:border-box;pointer-events:none}
+#selbox.on{display:block}
+#selbody{position:absolute;inset:0;cursor:move;pointer-events:all;touch-action:none}
+.sdl{position:absolute;width:22px;height:22px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 1px 8px rgba(0,0,0,.4);pointer-events:all;touch-action:none;z-index:7}
+.sdl.tl{left:-11px;top:-11px;cursor:nwse-resize}
+.sdl.tr{right:-11px;top:-11px;cursor:nesw-resize}
+.sdl.bl{left:-11px;bottom:-11px;cursor:nesw-resize}
+.sdl.br{right:-11px;bottom:-11px;cursor:nwse-resize}
+#seldel{position:absolute;top:-12px;right:-12px;width:22px;height:22px;border-radius:50%;background:#ef4444;border:2.5px solid #fff;color:#fff;font-size:.7rem;display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:all;z-index:8;box-shadow:0 1px 6px rgba(0,0,0,.3)}
+#selok{position:absolute;bottom:-34px;left:50%;transform:translateX(-50%);padding:5px 16px;border-radius:100px;border:none;background:#059669;color:#fff;font-family:"Plus Jakarta Sans",sans-serif;font-size:.75rem;font-weight:700;cursor:pointer;pointer-events:all;z-index:8;box-shadow:0 2px 8px rgba(5,150,105,.4);white-space:nowrap}
+/* zoom flotante */
+#zfloat{position:fixed;right:10px;bottom:calc(var(--sb)+64px);display:none;flex-direction:column;align-items:center;gap:4px;z-index:22}
+#zfloat.on{display:flex}
+.zfb{width:34px;height:34px;border-radius:8px;border:1px solid var(--bd);background:var(--s1);color:var(--tx);font-size:1.1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh);transition:.13s}
+.zfb:hover{background:var(--s2);border-color:var(--acc);color:var(--acc)}
+#zfpct{font-size:.52rem;font-family:'JetBrains Mono',monospace;color:var(--tx3)}
+
+/* ── POLÍTICA DE PRIVACIDAD ─────────────────────────────────── */
+#privmodal{position:fixed;inset:0;background:var(--bg);z-index:300;display:none;flex-direction:column;overflow:hidden}
+#privmodal.on{display:flex}
+#privhead{display:flex;align-items:center;gap:10px;padding:calc(var(--st)+12px) 16px 12px;background:var(--s1);border-bottom:1px solid var(--bd);flex-shrink:0}
+#privhead h2{flex:1;font-size:1rem;font-weight:800}
+#privhead button{width:32px;height:32px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--tx2);cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+#privbody{flex:1;overflow-y:auto;padding:20px 18px calc(20px + var(--sb));max-width:680px;margin:0 auto;width:100%}
+#privbody h3{font-size:.88rem;font-weight:800;margin:18px 0 6px;color:var(--tx)}
+#privbody p,#privbody li{font-size:.82rem;color:var(--tx2);line-height:1.7;margin-bottom:6px}
+#privbody ul{padding-left:18px;margin-bottom:8px}
+#privbody .chip{display:inline-block;background:rgba(5,150,105,.1);color:var(--grn);border:1px solid rgba(5,150,105,.2);border-radius:6px;padding:3px 10px;font-size:.72rem;font-weight:700;margin-bottom:12px}
+#privbody .lastupd{font-size:.68rem;color:var(--tx3);font-family:'JetBrains Mono',monospace}
+
+/* ── ANUNCIO INTERSTICIAL ───────────────────────────────────── */
+#adinter{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:999;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#adinter.on{display:flex}
+#adinner{width:300px;background:#1a1a2e;border-radius:14px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.6)}
+#adtop{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:#111;border-bottom:1px solid rgba(255,255,255,.08)}
+#adtop span{font-size:.65rem;color:rgba(255,255,255,.4);font-family:'JetBrains Mono',monospace}
+#adcontent{height:250px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0d1117,#161b27)}
+#adcontent p{color:rgba(255,255,255,.3);font-size:.75rem;font-family:'JetBrains Mono',monospace;text-align:center;line-height:1.8}
+#adclose{padding:8px 28px;border-radius:100px;border:none;background:var(--acc);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;opacity:.4;pointer-events:none;transition:all .3s}
+#adclose.ready{opacity:1;pointer-events:all;background:var(--grn)}
+#adtimer{font-size:.65rem;color:rgba(255,255,255,.4);font-family:'JetBrains Mono',monospace}
+
+/* ── PLANTILLAS NUEVO DOC ───────────────────────────────────── */
+/* ── EDITOR TIPO WORD ───────────────────────────────────────── */
+#wordeditor{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;background:var(--bg)}
+#wordeditor.on{display:flex}
+#wetoolbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:calc(var(--st)+8px) 10px 8px;background:var(--s1);border-bottom:1px solid var(--bd);flex-shrink:0}
+#wetoolbar .wegrp{display:flex;align-items:center;gap:2px;padding-right:8px;border-right:1px solid var(--bd);margin-right:4px}
+#wetoolbar .wegrp:last-child{border:none;margin:0}
+.webtn{height:30px;min-width:30px;padding:0 7px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--tx2);cursor:pointer;font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:4px;transition:.12s}
+.webtn:hover{background:var(--s3);border-color:var(--bd)}
+.webtn.on{background:rgba(37,99,235,.15);border-color:rgba(37,99,235,.3);color:var(--acc)}
+.wesel{height:30px;padding:0 6px;border-radius:6px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-size:.75rem;cursor:pointer;outline:none}
+#wearea{flex:1;overflow-y:auto;padding:20px;display:flex;justify-content:center;background:#e8eaed}
+[data-theme="dark"] #wearea{background:#1a1a2a}
+#wepage{width:210mm;min-height:297mm;background:#fff;padding:20mm 25mm;box-shadow:0 2px 20px rgba(0,0,0,.15);outline:none;font-family:Arial,sans-serif;font-size:12pt;line-height:1.6;color:#111;caret-color:#2563eb}
+[data-theme="dark"] #wepage{background:#1e1e2e;color:#e2e8f0}
+#wepage:focus{outline:none}
+#wefoot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--s1);border-top:1px solid var(--bd);flex-shrink:0;gap:8px;flex-wrap:wrap}
+#wecount{font-size:.68rem;color:var(--tx3);font-family:'JetBrains Mono',monospace}
+/* ── MODAL GUARDAR ──────────────────────────────────────────── */
+#savename{width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;outline:none;transition:.15s}
+#savename:focus{border-color:var(--acc)}
+</style>
+</head>
+<body>
+
+<!-- LANDING -->
+<div id="landing" class="on">
+  <nav class="ln">
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 26 26" fill="none"><rect width="26" height="26" rx="7" fill="#2563eb"/><path d="M7 6h8l4 4v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z" fill="white" opacity=".92"/><path d="M15 6l4 4h-4V6z" fill="white" opacity=".5"/><path d="M9 14h8M9 17h5" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>Rúbrica</span>
+    </div>
+    <button class="btn-o" style="padding:7px 16px;font-size:.82rem" onclick="enterApp()">Abrir editor →</button>
+  </nav>
+  <div class="lhero">
+    <div class="lbadge">📱 PWA · Sin servidor · Gratis</div>
+    <h1>Firma y anota<br><span>tus PDFs al instante</span></h1>
+    <p>Sin subir archivos. Sin crear cuenta. Todo se procesa en tu dispositivo.</p>
+    <div class="lbtns">
+      <label class="btn-p">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Abrir PDF
+        <input type="file" id="lfi" accept="application/pdf,.pdf">
+      </label>
+      <button class="btn-o" onclick="enterApp()">Ver la app</button>
+    </div>
+    <p class="lhint">Funciona en móvil y escritorio · Instala como app (PWA)</p>
+  </div>
+  <div class="lfeats">
+    <div class="lf"><div class="lfi" style="background:rgba(37,99,235,.08);color:#2563eb"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17c3-3 5-6 5-8a2 2 0 0 0-4 0c0 2.7 2.7 5.3 8 8 2.7 1.3 5 2 7 2a3 3 0 0 0 0-6c-2 0-4 .7-6 2"/></svg></div><h3>Firma digital</h3><p>Dibuja tu firma y colócala en cualquier punto del documento.</p></div>
+    <div class="lf"><div class="lfi" style="background:rgba(124,58,237,.08);color:#7c3aed"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/></svg></div><h3>Anotaciones</h3><p>Dibuja y resalta texto sobre cualquier página del PDF.</p></div>
+    <div class="lf"><div class="lfi" style="background:rgba(5,150,105,.08);color:#059669"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div><h3>Escáner</h3><p>Fotografía documentos físicos y conviértelos en PDF.</p></div>
+    <div class="lf"><div class="lfi" style="background:rgba(217,119,6,.08);color:#d97706"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><h3>Privacidad total</h3><p>Ningún archivo sale de tu dispositivo. Cero servidores.</p></div>
+    <div class="lf"><div class="lfi" style="background:rgba(239,68,68,.08);color:#ef4444"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><h3>Exportar</h3><p>Descarga el PDF firmado o compártelo directamente.</p></div>
+    <div class="lf"><div class="lfi" style="background:rgba(14,165,233,.08);color:#0ea5e9"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/></svg></div><h3>Combinar PDFs</h3><p>Une múltiples archivos en uno solo.</p></div>
+  </div>
+  <footer class="lfooter">
+    <p>© 2026 Rúbrica — Todos los derechos reservados</p>
+    <p style="margin-bottom:14px">
+      <a href="#" onclick="openPrivacy();return false" style="color:var(--acc);font-size:.76rem;text-decoration:none">Política de Privacidad</a>
+      &nbsp;·&nbsp;
+      <a href="mailto:tu@email.com" style="color:var(--tx3);font-size:.76rem;text-decoration:none">Contacto</a>
+    </p>
+    <button class="btn-p" onclick="enterApp()" style="margin:0 auto">Abrir el editor →</button>
+  </footer>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- Topbar -->
+  <div id="topbar">
+    <div class="tlogo" onclick="goLanding()" title="Ver presentación" style="cursor:pointer">
+      <svg width="20" height="20" viewBox="0 0 26 26" fill="none"><rect width="26" height="26" rx="7" fill="#2563eb"/><path d="M7 6h8l4 4v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z" fill="white" opacity=".92"/><path d="M15 6l4 4h-4V6z" fill="white" opacity=".5"/><path d="M9 14h8M9 17h5" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span>Rúbrica</span>
+    </div>
+    <button class="tbtn" onclick="openNewDoc()" title="Nuevo documento">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>Nuevo</span>
+    </button>
+    <label class="tbtn" title="Abrir PDF">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>Abrir PDF</span>
+      <input type="file" id="fi" accept="application/pdf,.pdf">
+    </label>
+    <button class="tbtn acc" id="savebtn" style="display:none" onclick="openSaveModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>Guardar</span>
+    </button>
+    <div id="ssep" style="display:none"></div>
+    <button class="tbtn" onclick="openScanner()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      <span>Escanear</span>
+    </button>
+    <div class="tsp"></div>
+    <button class="tbtn" onclick="openPrivacy()" title="Política de privacidad" style="font-size:.65rem">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    </button>
+    <button class="tbtn" id="thmbtn" onclick="toggleDark()">
+      <svg id="thmic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <button class="tbtn" onclick="openProModal()" style="color:var(--ylw);border-color:rgba(217,119,6,.3)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+    </button>
+  </div>
+
+  <!-- Right col -->
+  <div id="rc">
+    <!-- Toolbar -->
+    <div id="tb">
+      <button class="tbut on" id="t-cursor" onclick="setTool('cursor')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l7 19 3-8 8-3z"/></svg>VER</button>
+      <button class="tbut" id="t-draw" onclick="setTool('draw')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/></svg>DIBUJAR</button>
+      <button class="tbut" id="t-hi" onclick="setTool('hi')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="7" rx="2"/></svg>RESALTAR</button>
+      <button class="tbut" id="t-text" onclick="setTool('text')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="12" y1="4" x2="12" y2="20"/></svg>TEXTO</button>
+      <button class="tbut" onclick="openSigModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-3 5-6 5-8a2 2 0 0 0-4 0c0 2.7 2.7 5.3 8 8 2.7 1.3 5 2 7 2a3 3 0 0 0 0-6c-2 0-4 .7-6 2"/></svg>FIRMA</button>
+      <div class="tsep"></div>
+      <div id="crow" style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+        <div class="cdot on" style="background:#1a1aff" data-c="#1a1aff" onclick="setColor(this)"></div>
+        <div class="cdot" style="background:#dd0000" data-c="#dd0000" onclick="setColor(this)"></div>
+        <div class="cdot" style="background:#006600" data-c="#006600" onclick="setColor(this)"></div>
+        <div class="cdot" style="background:#ff7700" data-c="#ff7700" onclick="setColor(this)"></div>
+        <div class="cdot" style="background:#111" data-c="#111" onclick="setColor(this)"></div>
+      </div>
+      <div class="tsep"></div>
+      <input type="range" id="sw" min="1" max="20" value="3">
+      <div class="tsep"></div>
+      <button class="tbut" onclick="undo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>DESHACER</button>
+      <button class="tbut" onclick="clearPg()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>LIMPIAR</button>
+      <div class="tsep"></div>
+      <div class="znav">
+        <button onclick="doZoom(-1)">−</button>
+        <span id="zlbl">100%</span>
+        <button onclick="doZoom(1)">+</button>
+      </div>
+      <div class="tsep"></div>
+      <div class="pnav">
+        <button id="pb" onclick="goPage(-1)" disabled>‹</button>
+        <span id="plbl">—</span>
+        <button id="nb" onclick="goPage(1)" disabled>›</button>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div id="main">
+      <div id="dz">
+        <div class="dzic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <p class="dztit">Rúbrica</p>
+        <p class="dzsub">Firma, anota y escanea documentos PDF</p>
+        <div class="dzact">
+          <label class="dzbtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Abrir PDF
+            <input type="file" id="fi2" accept="application/pdf,.pdf">
+          </label>
+          <button class="scanbtn" onclick="openScanner()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Escanear documento
+          </button>
+        </div>
+      </div>
+      <!-- Canvas wrap — canvases get size set by JS only, NO CSS width/height -->
+      <div id="cw">
+        <canvas id="pc"></canvas>
+        <canvas id="ac"></canvas>
+        <canvas id="xc"></canvas>
+        <div id="selbox"><div id="selbody"></div><div class="sdl tl" id="sh-tl"></div><div class="sdl tr" id="sh-tr"></div><div class="sdl bl" id="sh-bl"></div><div class="sdl br" id="sh-br"></div><div id="seldel">✕</div><button id="selok" onclick="hideSel();toast('Fijado ✓','ok')">✓ Fijar</button></div>
+      </div>
+    </div>
+  </div><!-- /rc -->
+</div><!-- /app -->
+
+<div id="zfloat"><button class="zfb" onclick="doZoom(1)">+</button><div id="zfpct">100%</div><button class="zfb" onclick="doZoom(-1)">−</button><button class="zfb" style="font-size:.65rem" onclick="doZoom(0)" title="Ajustar">⊡</button></div>
+<!-- Thumbs -->
+<div id="thumbs"></div>
+
+<!-- Place overlay -->
+<div id="ov">
+  <p id="ovmsg">Toca el PDF para colocar la firma</p>
+  <button class="ovcfm" id="cfmsig" onclick="confirmSig()">✓ Confirmar firma</button>
+  <button class="ovcfm" id="cfmtxt" onclick="confirmTxt()">✓ Confirmar texto</button>
+</div>
+
+<!-- Dock -->
+<div id="dock">
+  <button class="dbtn on" id="d-cursor" onclick="setTool('cursor')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l7 19 3-8 8-3z"/></svg></button>
+  <button class="dbtn" id="d-draw" onclick="setTool('draw')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/></svg></button>
+  <button class="dbtn" id="d-hi" onclick="setTool('hi')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="7" rx="2"/></svg></button>
+  <button class="dbtn" id="d-text" onclick="setTool('text')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="12" y1="4" x2="12" y2="20"/></svg></button>
+  <div class="dsep"></div>
+  <button class="dbtn" style="color:var(--ylw)" onclick="openSigModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-3 5-6 5-8a2 2 0 0 0-4 0c0 2.7 2.7 5.3 8 8 2.7 1.3 5 2 7 2a3 3 0 0 0 0-6c-2 0-4 .7-6 2"/></svg></button>
+  <div class="dsep"></div>
+  <button class="dbtn" onclick="undo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></button>
+  <div class="dsep"></div>
+  <button class="dbtn" style="color:var(--grn)" onclick="sharePDF()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+  <div class="dsep"></div>
+  <button class="dbtn" onclick="openScanner()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
+</div>
+
+<!-- Ad banner -->
+<div id="adbar">
+  <!-- ═══════════════════════════════════════════════════════════
+       PUBLICIDAD — instrucciones de activación:
+
+       OPCIÓN A · Web (AdSense):
+       1. Entra en adsense.google.com y obtén tu código de anuncio
+       2. Reemplaza este comentario por tu bloque <ins class="adsbygoogle">
+
+       OPCIÓN B · App Android (AdMob):
+       1. Crea una cuenta en admob.google.com
+       2. Crea una app y una unidad de anuncio tipo "Banner"
+       3. Tu ID de unidad tendrá formato: ca-app-pub-XXXXXXXX/XXXXXXXXXX
+       4. El SDK de AdMob se integra en el contenedor TWA (no en el HTML)
+          — ver instrucciones en pwabuilder.com al generar el APK
+
+       MIENTRAS TANTO — se muestra este placeholder:
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="adplaceholder" style="width:320px;height:50px;background:var(--s2);border:1px dashed var(--bd);border-radius:6px;display:flex;align-items:center;justify-content:center;gap:8px">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    <span style="font-size:.65rem;color:var(--tx3);font-family:'JetBrains Mono',monospace">ESPACIO PUBLICITARIO</span>
+  </div>
+</div>
+
+
+<!-- Modal guardar PDF -->
+<div class="backdrop" id="savemodal">
+  <div class="sheet">
+    <div class="shdl"></div>
+    <div class="shh">
+      <span class="sht">Guardar PDF</span>
+      <button class="shx" onclick="closeSaveModal()">✕</button>
+    </div>
+    <div style="padding:12px 14px 4px">
+      <p style="font-size:.75rem;color:var(--tx2);margin-bottom:7px">Nombre del archivo:</p>
+      <input id="savename" type="text" placeholder="mi-documento" value="documento-firmado"
+        onkeydown="if(event.key==='Enter') doSaveWithName()">
+      <p style="font-size:.68rem;color:var(--tx3);margin-top:5px">.pdf se añade automáticamente</p>
+    </div>
+    <div class="sha" style="margin-top:8px">
+      <button class="shb" onclick="closeSaveModal()">Cancelar</button>
+      <button class="shb" onclick="doSaveWithName(true)" style="color:var(--acc);border-color:rgba(37,99,235,.3)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Compartir
+      </button>
+      <button class="shb p" onclick="doSaveWithName()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Descargar
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Editor tipo Word -->
+<div id="wordeditor">
+
+  <!-- Toolbar -->
+  <div id="wetoolbar">
+
+    <div class="wegrp">
+      <button class="webtn" title="Volver" onclick="closeWordEditor()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+    </div>
+
+    <div class="wegrp">
+      <select class="wesel" id="wefont" onchange="weCmd('fontName',this.value)" style="width:110px">
+        <option value="Arial">Arial</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Helvetica">Helvetica</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Trebuchet MS">Trebuchet MS</option>
+      </select>
+      <select class="wesel" id="wesize" onchange="weCmd('fontSize',this.value)" style="width:56px">
+        <option value="1">8</option>
+        <option value="2">10</option>
+        <option value="3" selected>12</option>
+        <option value="4">14</option>
+        <option value="5">18</option>
+        <option value="6">24</option>
+        <option value="7">36</option>
+      </select>
+    </div>
+
+    <div class="wegrp">
+      <button class="webtn" id="we-bold" title="Negrita (Ctrl+B)" onclick="weCmd('bold')"><b>N</b></button>
+      <button class="webtn" id="we-italic" title="Cursiva (Ctrl+I)" onclick="weCmd('italic')"><i>C</i></button>
+      <button class="webtn" id="we-underline" title="Subrayado (Ctrl+U)" onclick="weCmd('underline')" style="text-decoration:underline">S</button>
+      <button class="webtn" id="we-strikethrough" title="Tachado" onclick="weCmd('strikeThrough')" style="text-decoration:line-through">T</button>
+    </div>
+
+    <div class="wegrp">
+      <button class="webtn" title="Alinear izquierda" onclick="weCmd('justifyLeft')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+      </button>
+      <button class="webtn" title="Centrar" onclick="weCmd('justifyCenter')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+      </button>
+      <button class="webtn" title="Alinear derecha" onclick="weCmd('justifyRight')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <button class="webtn" title="Justificar" onclick="weCmd('justifyFull')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="wegrp">
+      <button class="webtn" title="Lista con viñetas" onclick="weCmd('insertUnorderedList')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>
+      </button>
+      <button class="webtn" title="Lista numerada" onclick="weCmd('insertOrderedList')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4" stroke-linecap="round"/><path d="M4 10h2" stroke-linecap="round"/><path d="M3 14h2a1 1 0 0 1 0 2H3a1 1 0 0 1 0 2h2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="wegrp">
+      <label class="webtn" title="Color de texto" style="gap:3px;cursor:pointer">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3L5 21M19 3l-4 18M5 9h14M3 15h18"/></svg>
+        <input type="color" id="wetxtcolor" value="#000000" style="width:18px;height:14px;border:none;padding:0;cursor:pointer;border-radius:3px" onchange="weCmd('foreColor',this.value)">
+      </label>
+      <label class="webtn" title="Color de fondo" style="gap:3px;cursor:pointer">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <input type="color" id="webgcolor" value="#ffff00" style="width:18px;height:14px;border:none;padding:0;cursor:pointer;border-radius:3px" onchange="weCmd('hiliteColor',this.value)">
+      </label>
+    </div>
+
+    <div class="wegrp">
+      <button class="webtn" title="Deshacer (Ctrl+Z)" onclick="weCmd('undo')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+      </button>
+      <button class="webtn" title="Rehacer (Ctrl+Y)" onclick="weCmd('redo')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Área de escritura — hoja A4 -->
+  <div id="wearea">
+    <div id="wepage" contenteditable="true" spellcheck="true"
+      oninput="weUpdateCount()"
+      onkeyup="weUpdateToolbar()">
+    </div>
+  </div>
+
+  <!-- Pie — contador + botones -->
+  <div id="wefoot">
+    <span id="wecount">0 palabras · 0 caracteres</span>
+    <div style="display:flex;gap:7px">
+      <button class="shb" onclick="closeWordEditor()">Cancelar</button>
+      <button class="shb p" onclick="weConvertToPDF()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Convertir a PDF →
+      </button>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- Sig modal -->
+<div class="backdrop" id="sigmodal">
+  <div class="sheet">
+    <div class="shdl"></div>
+    <div class="shh"><span class="sht">Dibuja tu firma</span><button class="shx" onclick="closeSig()">✕</button></div>
+    <div class="savsigs" id="savsigs"></div>
+    <canvas id="sigcv"></canvas>
+    <p style="text-align:center;font-size:.68rem;color:var(--tx3);padding:2px 0 6px">Dibuja con el dedo o el ratón</p>
+    <div class="sigcs">
+      <span>Color:</span>
+      <div class="cdot on" style="background:#111" data-c="#111" onclick="setSigCol(this)"></div>
+      <div class="cdot" style="background:#1a1aff" data-c="#1a1aff" onclick="setSigCol(this)"></div>
+      <div class="cdot" style="background:#dd0000" data-c="#dd0000" onclick="setSigCol(this)"></div>
+    </div>
+    <div class="sha">
+      <button class="shb" onclick="clearSig()">Borrar</button>
+      <button class="shb" onclick="saveSig()" style="color:var(--ylw);border-color:rgba(217,119,6,.3)">Guardar</button>
+      <button class="shb p" onclick="useSig()">Usar firma →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Text modal -->
+<div class="backdrop" id="txtmodal">
+  <div class="sheet">
+    <div class="shdl"></div>
+    <div class="shh"><span class="sht">Insertar texto</span><button class="shx" onclick="closeTxt()">✕</button></div>
+    <div style="padding:12px 14px 0">
+      <textarea id="txtin" rows="2" placeholder="Escribe aquí..."></textarea>
+      <div class="fpills" style="margin-top:7px">
+        <button class="fp on" data-font="Arial" onclick="setFont(this)" style="font-family:Arial">Arial</button>
+        <button class="fp" data-font="Georgia" onclick="setFont(this)" style="font-family:Georgia">Georgia</button>
+        <button class="fp" data-font="Times New Roman" onclick="setFont(this)" style="font-family:serif">Times</button>
+        <button class="fp" data-font="Courier New" onclick="setFont(this)" style="font-family:monospace">Mono</button>
+        <button class="fp" data-font="Playfair Display" onclick="setFont(this)" style="font-family:'Playfair Display',serif">Playfair</button>
+        <button class="fp" data-font="Roboto Slab" onclick="setFont(this)" style="font-family:'Roboto Slab',serif">Slab</button>
+        <button class="fp" data-font="Dancing Script" onclick="setFont(this)" style="font-family:'Dancing Script',cursive">Dancing</button>
+        <button class="fp" data-font="Bebas Neue" onclick="setFont(this)" style="font-family:'Bebas Neue',sans-serif">BEBAS</button>
+        <button class="fp" data-font="Pacifico" onclick="setFont(this)" style="font-family:'Pacifico',cursive">Pacifico</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:7px">
+        <span id="fslbl" style="font-size:.72rem;color:var(--tx2);min-width:28px;font-family:'JetBrains Mono',monospace">14</span>
+        <input type="range" id="fsr" min="8" max="72" value="14" style="-webkit-appearance:none;flex:1;height:3px;border-radius:2px;background:var(--bd);outline:none;cursor:pointer" oninput="document.getElementById('fslbl').textContent=this.value">
+      </div>
+      <div style="display:flex;gap:7px;margin-bottom:11px">
+        <div class="cdot on" style="background:#111" data-c="#111" onclick="setTxtCol(this)"></div>
+        <div class="cdot" style="background:#1a1aff" data-c="#1a1aff" onclick="setTxtCol(this)"></div>
+        <div class="cdot" style="background:#dd0000" data-c="#dd0000" onclick="setTxtCol(this)"></div>
+        <div class="cdot" style="background:#006600" data-c="#006600" onclick="setTxtCol(this)"></div>
+      </div>
+    </div>
+    <div class="sha">
+      <button class="shb" onclick="closeTxt()">Cancelar</button>
+      <button class="shb p" onclick="confirmTxtModal()">Colocar texto →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pro modal -->
+<div class="backdrop" id="promodal">
+  <div class="sheet">
+    <div class="shdl"></div>
+    <div class="probadge">★</div>
+    <p class="protit">Rúbrica Pro</p>
+    <p class="prosub" id="promsg">Versión gratuita. Para uso ilimitado descarga la app.</p>
+    <div style="padding:0 14px 10px;display:flex;flex-direction:column;gap:7px">
+      <!-- Sin compra en versión web -->
+      <button class="shb" onclick="watchAd()">Ver anuncio (+3 usos gratis)</button>
+      <a class="shb" href="https://play.google.com/store/apps/details?id=com.rubrica.app" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;color:var(--grn);border-color:rgba(5,150,105,.3)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5v-17c0-.83 1-.83 1.5-.5l15 8.5-15 8.5c-.5.33-1.5.33-1.5-.5z"/></svg>Descargar app en Play Store</a>
+      <div style="display:flex;flex-direction:column;gap:5px;padding:8px 0 0">
+        <p style="font-size:.73rem;color:var(--tx2);font-weight:600">¿Ya tienes un código de activación?</p>
+        <div style="display:flex;gap:6px">
+          <input id="procode" type="text" placeholder="RUBRICA-XXXX-XXXX"
+            style="flex:1;padding:9px 11px;border-radius:8px;border:1.5px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'JetBrains Mono',monospace;font-size:.8rem;outline:none;text-transform:uppercase"
+            oninput="this.value=this.value.toUpperCase()">
+          <button class="shb p" style="flex:0 0 auto;padding:0 14px" onclick="activateCode()">Activar</button>
+        </div>
+        <p id="codemsg" style="font-size:.7rem;color:var(--tx3);min-height:14px"></p>
+      </div>
+      <button class="shb" onclick="closePro()">Ahora no</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Política de Privacidad -->
+<div id="privmodal">
+  <div id="privhead">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <h2>Política de Privacidad</h2>
+    <button onclick="closePrivacy()">✕</button>
+  </div>
+  <div id="privbody">
+    <span class="chip">✓ Sin recopilación de datos</span>
+    <p class="lastupd">Última actualización: 10 de March de 2026</p>
+
+    <h3>1. Quiénes somos</h3>
+    <p><strong>Rúbrica</strong> es una aplicación web progresiva (PWA) de firma y anotación de documentos PDF. Desarrollada de forma independiente.</p>
+    <p>Contacto: <a href="mailto:tu@email.com" style="color:var(--acc)">tu@email.com</a></p>
+
+    <h3>2. Datos que NO recopilamos</h3>
+    <p>Rúbrica está diseñada con privacidad total. <strong>Ningún documento, firma ni anotación sale de tu dispositivo.</strong> No tenemos servidores que almacenen tus archivos.</p>
+    <ul>
+      <li>No recopilamos documentos PDF</li>
+      <li>No almacenamos firmas ni anotaciones</li>
+      <li>No recopilamos nombre, email ni datos personales</li>
+      <li>No usamos cookies de seguimiento</li>
+      <li>No vendemos datos a terceros</li>
+    </ul>
+
+    <h3>3. Datos que se guardan en tu dispositivo</h3>
+    <p>Solo en el almacenamiento local de tu dispositivo (<em>localStorage</em>), nunca en nuestros servidores:</p>
+    <ul>
+      <li>Tus firmas guardadas (para reutilizarlas)</li>
+      <li>Preferencias de la app (modo oscuro, etc.)</li>
+      <li>Estado de la licencia Pro (si la has activado)</li>
+    </ul>
+    <p>Puedes borrar estos datos en cualquier momento desde los ajustes de tu navegador.</p>
+
+    <h3>4. Publicidad</h3>
+    <p>La versión gratuita puede mostrar anuncios de Google AdSense. Google puede usar cookies para mostrar anuncios relevantes según tu actividad de navegación. Puedes gestionar tus preferencias en <a href="https://adssettings.google.com" target="_blank" style="color:var(--acc)">adssettings.google.com</a>.</p>
+    <p>Los usuarios con licencia <strong>Rúbrica Pro</strong> no ven publicidad.</p>
+
+    <h3>5. Permisos de la app</h3>
+    <ul>
+      <li><strong>Cámara:</strong> solo para el escáner de documentos, nunca grabamos ni almacenamos vídeo</li>
+      <li><strong>Almacenamiento:</strong> para guardar el PDF firmado en tu dispositivo</li>
+    </ul>
+
+    <h3>6. Menores de edad</h3>
+    <p>Rúbrica no está dirigida a menores de 13 años y no recopila conscientemente información de menores.</p>
+
+    <h3>7. Cambios en esta política</h3>
+    <p>Cualquier cambio se publicará en esta misma página con la fecha de actualización. El uso continuado de la app implica la aceptación de los cambios.</p>
+
+    <h3>8. Contacto</h3>
+    <p>Para cualquier consulta sobre privacidad escríbenos a <a href="mailto:tu@email.com" style="color:var(--acc)">tu@email.com</a></p>
+
+    <div style="margin-top:28px;padding-top:18px;border-top:1px solid var(--bd);text-align:center">
+      <p style="font-size:.7rem;color:var(--tx3)">© 2026 Rúbrica. Todos los derechos reservados.</p>
+      <p style="font-size:.7rem;color:var(--tx3)">Rúbrica es una marca registrada. Queda prohibida la reproducción total o parcial de esta aplicación sin autorización expresa.</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- Anuncio intersticial (ver anuncio para +3 usos) -->
+<div id="adinter">
+  <div id="adinner">
+    <div id="adtop">
+      <span>ANUNCIO</span>
+      <span id="adtimer">Espera 15s...</span>
+    </div>
+    <div id="adcontent">
+      <!-- Aquí va el banner real de AdMob/AdSense cuando esté configurado -->
+      <p>Aquí aparecerá<br>el anuncio de AdMob<br><br>ca-app-pub-XXXX/XXXX</p>
+    </div>
+  </div>
+  <button id="adclose" onclick="finishAd()">Obtener +3 usos →</button>
+  <span id="adtimer2" style="font-size:.65rem;color:rgba(255,255,255,.35);font-family:'JetBrains Mono',monospace"></span>
+</div>
+
+<!-- Scanner -->
+<div id="scan">
+  <video id="svid" autoplay playsinline muted></video>
+  <button id="flashbtn" onclick="toggleFlash()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></button>
+  <div id="sbar">
+    <button id="sclosebtn" onclick="closeScanner()">✕</button>
+    <span id="shint">Centra el documento y dispara</span>
+    <button id="sshoot" onclick="takeShot()"><svg viewBox="0 0 24 24" fill="white" width="26" height="26"><circle cx="12" cy="12" r="5"/></svg></button>
+  </div>
+</div>
+
+<!-- Crop -->
+<div id="crop">
+  <div id="cropwrap">
+    <canvas id="cropcv"></canvas>
+    <svg id="cropsvg"></svg>
+    <div class="cph" id="cp0"></div>
+    <div class="cph" id="cp1"></div>
+    <div class="cph" id="cp2"></div>
+    <div class="cph" id="cp3"></div>
+  </div>
+  <div id="cropbar">
+    <span id="cropinfo">Ajusta las esquinas del documento</span>
+    <div class="filrow">
+      <button class="filp on" data-f="color" onclick="setFil(this)">Color</button>
+      <button class="filp" data-f="bw" onclick="setFil(this)">B&N</button>
+      <button class="filp" data-f="contrast" onclick="setFil(this)">Contraste</button>
+      <button class="filp" data-f="sepia" onclick="setFil(this)">Sepia</button>
+    </div>
+    <div class="cropact">
+      <button class="cropbtn" onclick="rejectCrop()">Repetir foto</button>
+      <button class="cropbtn p" onclick="applyCrop()">Aplicar recorte</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast & Loading -->
+<div id="toast"></div>
+<div id="load"><div class="spin"></div><span id="loadmsg">Cargando...</span></div>
+
+<script>
+'use strict';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── CONFIG ────────────────────────────────────────────────────────────────
+const FREE = 3;
+const PR   = window.devicePixelRatio || 1;
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let isPro     = localStorage.getItem('rb_pro') === '1';
+
+// ── DETECCIÓN TWA (Google Play) ──────────────────────────────
+// Solo se activa Pro si el referrer es exactamente el paquete
+// de tu app en Play Store. Esto lo configuras cuando tengas
+// el nombre de paquete definitivo (ej: com.rubrica.app)
+// POR AHORA: desactivado para no dar Pro gratis a todos.
+(function() {
+  const PKG = '__PLAY_STORE_ONLY__'; // En web nunca se activa Pro automático
+  const isTWA = document.referrer === 'android-app://' + PKG + '/';
+  if (isTWA && !localStorage.getItem('rb_pro')) {
+    localStorage.setItem('rb_pro', '1');
+    localStorage.setItem('rb_pro_code', 'TWA-PLAY-STORE');
+    isPro = true;
+  }
+})();
+
+let dark      = localStorage.getItem('rb_dark') === '1';
+let pdfDoc    = null, pdfRaw = null;
+let curPage   = 1, totPages = 0;
+let scale     = 1, baseScale = 1;
+let tool      = 'cursor';
+let color     = '#1a1aff';
+let paths     = [];
+let sigUrl    = null;
+let activeSig = null;   // {x,y,w,h,data}
+let placeSig  = false;
+let placeTxt  = false;
+let txtOpts   = {text:'', font:'Arial', size:14, color:'#111'};
+let savedSigs = JSON.parse(localStorage.getItem('rb_sigs') || '[]');
+let drawing   = false, curPath = null;
+// Scanner
+let stream = null, flash = false, scanPages = [], curPhoto = null;
+let cpPts = [], cpImgW=0, cpImgH=0, cpDispW=0, cpDispH=0, cpOX=0, cpOY=0;
+let cvReady = false, scanFil = 'color';
+
+// ── DOM ───────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const mainEl = $('main');
+const cw     = $('cw');
+const pcv    = $('pc'), acv = $('ac'), xcv = $('xc');
+const pctx   = pcv.getContext('2d');
+const actx   = acv.getContext('2d');
+const xctx   = xcv.getContext('2d');
+const scv    = $('sigcv');
+const sctx   = scv.getContext('2d');
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+let toastT;
+function toast(msg, type='') {
+  const el = $('toast');
+  el.textContent = msg; el.className = 'on ' + type;
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.className = '', 2800);
+}
+function loading(on, msg='Cargando...') {
+  $('load').className = on ? 'on' : '';
+  $('loadmsg').textContent = msg;
+}
+
+// ── LANDING / APP ─────────────────────────────────────────────────────────
+function goLanding() {
+  $('app').classList.remove('on');
+  $('landing').classList.add('on');
+}
+function enterApp() {
+  localStorage.setItem('rb_visited', '1');
+  $('landing').classList.remove('on');
+  $('app').classList.add('on');
+  applyPro();
+}
+function applyPro() {
+  const app = $('app'), ad = $('adbar');
+  if (isPro) { ad.style.display='none'; app.classList.add('pro'); }
+  else        { ad.style.display='flex'; app.classList.remove('pro'); }
+}
+
+$('lfi').addEventListener('change', function() {
+  const f = this.files && this.files[0]; this.value = '';
+  if (f) { enterApp(); setTimeout(() => loadFile(f), 60); }
+});
+
+if (localStorage.getItem('rb_visited') === '1') {
+  $('landing').classList.remove('on');
+  $('app').classList.add('on');
+  applyPro();
+}
+
+// ── DARK MODE ─────────────────────────────────────────────────────────────
+function applyDark() {
+  document.body.classList.toggle('dark', dark);
+  $('thmic').innerHTML = dark
+    ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
+    : '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+}
+function toggleDark() { dark=!dark; localStorage.setItem('rb_dark',dark?'1':'0'); applyDark(); }
+applyDark();
+
+// ── PRO ───────────────────────────────────────────────────────────────────
+function getUses() { return parseInt(localStorage.getItem('rb_uses')||'0'); }
+function addUse()  { localStorage.setItem('rb_uses', getUses()+1); }
+function resetUses(){ localStorage.setItem('rb_uses','0'); }
+function checkUse() {
+  if (isPro) return true;
+  if (getUses()>=FREE) { openProModal('limit'); return false; }
+  addUse();
+  const l=FREE-getUses(); toast(l>0?`Te quedan ${l} usos`:'Último uso gratuito');
+  return true;
+}
+function openProModal(r) {
+  if (isPro) {
+    const code = localStorage.getItem('rb_pro_code') || '';
+    $('promsg').textContent = '✓ Pro activo' + (code ? ' · Código: ' + code : '');
+    $('promodal').classList.add('on');
+    return;
+  }
+  $('promsg').textContent = r==='limit'
+    ? `Has usado tus ${FREE} usos gratuitos.`
+    : 'Desbloquea Rúbrica Pro por un único pago.';
+  $('promodal').classList.add('on');
+}
+function closePro()  { $('promodal').classList.remove('on'); }
+// ── CÓDIGOS DE ACTIVACIÓN PRO ──────────────────────────────────
+// Añade aquí los códigos que envíes a tus clientes.
+// Formato: 'RUBRICA-XXXX-XXXX'
+// Cuando un código se usa, se guarda en localStorage para no reutizarlo
+// en el mismo dispositivo (el servidor real lo marcaría globalmente).
+const VALID_CODES = [
+  'RUBRICA-2024-PRO1',
+  'RUBRICA-2024-PRO2',
+  'RUBRICA-2024-PRO3',
+  'RUBRICA-2024-PRO4',
+  'RUBRICA-2024-PRO5',
+  'RUBRICA-BETA-0001',
+  'RUBRICA-BETA-0002',
+  'RUBRICA-BETA-0003',
+  'RUBRICA-BETA-0004',
+  'RUBRICA-BETA-0005',
+  // Añade más códigos aquí cuando los vendas
+];
+
+function activateCode() {
+  const code = $('procode').value.trim().toUpperCase();
+  const msg  = $('codemsg');
+  if (!code) { msg.style.color='var(--red)'; msg.textContent='Introduce un código.'; return; }
+
+  // Comprobar si ya fue usado en este dispositivo
+  const usedCodes = JSON.parse(localStorage.getItem('rb_used_codes') || '[]');
+  if (usedCodes.includes(code)) {
+    msg.style.color='var(--red)';
+    msg.textContent='Este código ya fue usado en este dispositivo.';
+    return;
+  }
+
+  if (VALID_CODES.includes(code)) {
+    // Marcar como usado
+    usedCodes.push(code);
+    localStorage.setItem('rb_used_codes', JSON.stringify(usedCodes));
+    localStorage.setItem('rb_pro', '1');
+    localStorage.setItem('rb_pro_code', code);
+    isPro = true;
+    closePro(); applyPro();
+    toast('¡Rúbrica Pro activado! ✓', 'ok');
+  } else {
+    msg.style.color='var(--red)';
+    msg.textContent='Código no válido. Comprueba mayúsculas y guiones.';
+  }
+}
+
+function buyPro() {
+  // Aquí irá el enlace a tu pasarela de pago (Stripe, PayPal, etc.)
+  // Por ahora abre un mailto para contacto directo
+  const subject = encodeURIComponent('Compra Rúbrica Pro');
+  const body    = encodeURIComponent('Hola, quiero comprar Rúbrica Pro (3,99 €).\n\nDispositivo: ' + navigator.userAgent);
+  window.open('mailto:tu@email.com?subject=' + subject + '&body=' + body);
+  $('codemsg').style.color='var(--tx2)';
+  $('codemsg').textContent='Te enviaremos el código por email en menos de 24h.';
+  closePro();
+}
+function watchAd() {
+  closePro();
+  let t = 15;
+  const inter  = $('adinter');
+  const btn    = $('adclose');
+  const timer  = $('adtimer');
+  const timer2 = $('adtimer2');
+  btn.classList.remove('ready');
+  timer.textContent  = `Espera ${t}s...`;
+  timer2.textContent = '';
+  inter.classList.add('on');
+  const iv = setInterval(() => {
+    t--;
+    timer.textContent = t > 0 ? `Espera ${t}s...` : '¡Listo!';
+    timer2.textContent = t > 0 ? `El botón se activa en ${t}s` : '';
+    if (t <= 0) {
+      clearInterval(iv);
+      btn.classList.add('ready');
+    }
+  }, 1000);
+}
+function finishAd() {
+  $('adinter').classList.remove('on');
+  resetUses();
+  toast('+3 usos desbloqueados ✓', 'ok');
+}
+
+// ── FILE INPUTS ───────────────────────────────────────────────────────────
+['fi','fi2'].forEach(id => {
+  $(id).addEventListener('change', function() {
+    const f=this.files&&this.files[0]; this.value='';
+    if(f) loadFile(f);
+  });
+});
+// Drag-drop
+const dz = $('dz');
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('over')}));
+dz.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f&&(f.type==='application/pdf'||f.name.endsWith('.pdf')))loadFile(f);else toast('Solo PDFs','err');});
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{e.preventDefault();if(pdfDoc)return;const f=e.dataTransfer&&e.dataTransfer.files[0];if(f&&(f.type==='application/pdf'||f.name.endsWith('.pdf')))loadFile(f);});
+
+// ── LOAD PDF ──────────────────────────────────────────────────────────────
+function loadFile(file) {
+  loading(true,'Abriendo PDF...');
+  const reader=new FileReader();
+  reader.onload = ev => {
+    try {
+      pdfRaw = ev.target.result.slice(0);
+      const task=pdfjsLib.getDocument({data:new Uint8Array(ev.target.result)});
+      task.onPassword=(upd,r)=>{
+        loading(false);
+        const p=prompt(r===1?'Contraseña:':'Contraseña incorrecta:');
+        if(!p){toast('Cancelado','err');return;}
+        loading(true,'Verificando...'); upd(p);
+      };
+      task.promise.then(doc=>{
+        pdfDoc=doc; totPages=doc.numPages; curPage=1; paths=[]; activeSig=null;
+        return pdfDoc.getPage(1);
+      }).then(p1=>{
+        const vp=p1.getViewport({scale:1});
+        baseScale=scale=(mainEl.clientWidth-28)/vp.width;
+        $('dz').style.display='none';
+        cw.style.display='block';
+        $('savebtn').style.display='';
+        $('dock').classList.add('on');
+        updateNav(); return renderPage(1);
+      }).then(()=>{
+        loading(false);
+        toast('PDF cargado — '+totPages+' página'+(totPages>1?'s':''));
+      }).catch(e=>{loading(false);toast('Error: '+e.message,'err');});
+    } catch(e){loading(false);toast('Error: '+e.message,'err');}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function renderPage(n) {
+  return pdfDoc.getPage(n).then(page=>{
+    const vp=page.getViewport({scale});
+    const W=Math.round(vp.width), H=Math.round(vp.height);
+    // Set canvas buffer size (PR * logical size)
+    pcv.width  = acv.width  = xcv.width  = Math.round(W*PR);
+    pcv.height = acv.height = xcv.height = Math.round(H*PR);
+    // Set canvas CSS display size = logical size (NO scaling via CSS)
+    pcv.style.width  = acv.style.width  = xcv.style.width  = W+'px';
+    pcv.style.height = acv.style.height = xcv.style.height = H+'px';
+    cw.style.width  = W+'px';
+    cw.style.height = H+'px';
+    pctx.setTransform(PR,0,0,PR,0,0);
+    return page.render({canvasContext:pctx,viewport:vp}).promise;
+  }).then(()=>redraw());
+}
+function updateNav() {
+  $('pb').disabled=curPage<=1; $('nb').disabled=curPage>=totPages;
+  $('plbl').textContent=curPage+'/'+totPages;
+}
+function goPage(d) {
+  if(!pdfDoc) return;
+  const n=curPage+d; if(n<1||n>totPages) return;
+  curPage=n; loading(true);
+  renderPage(n).then(()=>{loading(false);mainEl.scrollTop=0;updateNav();updateThumbActive();});
+}
+function doZoom(d) {
+  if(!pdfDoc) return;
+  if(d===0) scale=baseScale;
+  else scale=Math.max(baseScale*0.3,Math.min(baseScale*4,scale+d*baseScale*0.25));
+  hideSel(); loading(true);
+  renderPage(curPage).then(()=>{
+    loading(false);
+    const pct=Math.round(scale/baseScale*100)+'%';
+    $('zlbl').textContent=pct; $('zfpct').textContent=pct;
+  });
+}
+
+// ── TOOLS ─────────────────────────────────────────────────────────────────
+function setTool(t) {
+  tool=t;
+  ['cursor','draw','hi','text'].forEach(id=>{
+    const tb=$('t-'+id), db=$('d-'+id);
+    if(tb) tb.classList.toggle('on',id===t);
+    if(db) db.classList.toggle('on',id===t);
+  });
+  xcv.style.cursor = t==='cursor'?'default':t==='text'?'text':'crosshair';
+  // Cancel any pending placement
+  if(t!=='cursor'){placeSig=false;placeTxt=false;$('ov').classList.remove('on');}
+  // Text: open modal immediately
+  if(t==='text' && pdfDoc) openTxtModal();
+}
+function setColor(el) {
+  document.querySelectorAll('#crow .cdot').forEach(d=>d.classList.remove('on'));
+  el.classList.add('on'); color=el.dataset.c;
+}
+
+// ── CANVAS EVENTS ─────────────────────────────────────────────────────────
+// Get logical canvas coordinates from any event
+function xy(e) {
+  const r = xcv.getBoundingClientRect();
+  let cx, cy;
+  if      (e.touches && e.touches.length)         { cx=e.touches[0].clientX;        cy=e.touches[0].clientY; }
+  else if (e.changedTouches && e.changedTouches.length) { cx=e.changedTouches[0].clientX; cy=e.changedTouches[0].clientY; }
+  else                                             { cx=e.clientX;                   cy=e.clientY; }
+  // r.width === CSS width === logical canvas width (we set style.width = W+'px')
+  // so no scaling needed — 1:1 mapping
+  return { x: cx - r.left, y: cy - r.top };
+}
+
+xcv.addEventListener('mousedown',  down);
+xcv.addEventListener('touchstart', e=>{ e.preventDefault(); down(e); }, {passive:false});
+xcv.addEventListener('mousemove',  move);
+xcv.addEventListener('touchmove',  e=>{ e.preventDefault(); move(e); }, {passive:false});
+xcv.addEventListener('mouseup',    up);
+xcv.addEventListener('touchend',   up);
+xcv.addEventListener('mouseleave', leave);
+
+function down(e) {
+  if (!pdfDoc) return;
+  const p = xy(e);
+  if (tool==='cursor') { const h=hitItm(p.x,p.y); if(h>=0){selIdx=h;showSel();}else{hideSel();} return; }
+
+  // placeSig ya no se usa — la firma se coloca directamente al pulsar "Usar firma"
+  if (placeSig) { placeSig=false; return; }
+  if (placeTxt) return; // handled in up()
+
+  if (tool==='draw' || tool==='hi') {
+    drawing = true;
+    curPath = {
+      type:  tool==='hi' ? 'hi' : 'draw',
+      page:  curPage,
+      color: color,
+      width: tool==='hi' ? 20 : parseInt($('sw').value),
+      pts:   [{x:p.x, y:p.y}]
+    };
+  }
+}
+
+function move(e) {
+  if (!drawing || !curPath) return;
+  const p = xy(e);
+  curPath.pts.push({x:p.x, y:p.y});
+  // Live preview on xc
+  xctx.clearRect(0,0,xcv.width,xcv.height);
+  xctx.save();
+  xctx.setTransform(PR,0,0,PR,0,0);
+  if (curPath.type==='hi') {
+    xctx.globalAlpha = 0.35;
+    xctx.lineWidth   = curPath.width;
+    xctx.lineCap     = 'square';
+    xctx.lineJoin    = 'square';
+  } else {
+    xctx.globalAlpha = 1;
+    xctx.lineWidth   = curPath.width;
+    xctx.lineCap     = 'round';
+    xctx.lineJoin    = 'round';
+  }
+  xctx.strokeStyle = curPath.color;
+  xctx.beginPath();
+  curPath.pts.forEach((pt,i) => i===0 ? xctx.moveTo(pt.x,pt.y) : xctx.lineTo(pt.x,pt.y));
+  xctx.stroke();
+  xctx.restore();
+}
+
+function up(e) {
+  if (placeTxt) {
+    const p = xy(e);
+    const t = txtOpts;
+    if (!t.text.trim()) { toast('Escribe un texto primero','err'); return; }
+    paths.push({type:'text',page:curPage,x:p.x,y:p.y,text:t.text,font:t.font,size:t.size,color:t.color});
+    redraw(); placeTxt=false; $('ov').classList.remove('on');
+    selIdx=paths.length-1; showSel();
+    toast('Texto colocado ✓','ok');
+    return;
+  }
+  if (!drawing || !curPath) return;
+  drawing=false;
+  if (curPath.pts.length>=2) paths.push(curPath);
+  curPath=null;
+  xctx.clearRect(0,0,xcv.width,xcv.height);
+  redraw();
+}
+
+function leave() {
+  if (drawing && curPath) {
+    drawing=false;
+    if (curPath.pts.length>=2) paths.push(curPath);
+    curPath=null;
+    xctx.clearRect(0,0,xcv.width,xcv.height);
+    redraw();
+  }
+}
+
+// ── REDRAW ────────────────────────────────────────────────────────────────
+function redraw() {
+  actx.clearRect(0,0,acv.width,acv.height);
+  actx.save();
+  actx.setTransform(PR,0,0,PR,0,0);
+
+  paths.filter(p=>p.page===curPage).forEach(p=>{
+    actx.save();
+    if (p.type==='draw') {
+      actx.globalAlpha=1; actx.strokeStyle=p.color;
+      actx.lineWidth=p.width; actx.lineCap='round'; actx.lineJoin='round';
+      actx.beginPath();
+      p.pts.forEach((pt,i)=>i===0?actx.moveTo(pt.x,pt.y):actx.lineTo(pt.x,pt.y));
+      actx.stroke();
+    } else if (p.type==='hi') {
+      actx.globalAlpha=0.35; actx.strokeStyle=p.color;
+      actx.lineWidth=p.width; actx.lineCap='square'; actx.lineJoin='square';
+      actx.beginPath();
+      p.pts.forEach((pt,i)=>i===0?actx.moveTo(pt.x,pt.y):actx.lineTo(pt.x,pt.y));
+      actx.stroke();
+    } else if (p.type==='text') {
+      actx.globalAlpha=1; actx.fillStyle=p.color;
+      actx.font=`${p.size}px ${p.font}`;
+      actx.fillText(p.text, p.x, p.y);
+    } else if (p.type==='sig') {
+      const img=new Image();
+      img.onload=()=>{ actx.save(); actx.setTransform(PR,0,0,PR,0,0); actx.globalAlpha=1; actx.drawImage(img,p.x,p.y,p.w,p.h); actx.restore(); };
+      img.src=p.data;
+    }
+    actx.restore();
+  });
+
+  actx.restore();
+
+  // Draw active (unconfirmed) sig
+  if (activeSig) {
+    const img=new Image();
+    img.onload=()=>{
+      actx.save();
+      actx.setTransform(PR,0,0,PR,0,0);
+      actx.drawImage(img,activeSig.x,activeSig.y,activeSig.w,activeSig.h);
+      actx.strokeStyle='#2563eb'; actx.lineWidth=1.5; actx.setLineDash([4,3]);
+      actx.strokeRect(activeSig.x,activeSig.y,activeSig.w,activeSig.h);
+      actx.setLineDash([]);
+      actx.restore();
+    };
+    img.src=activeSig.data;
+  }
+}
+
+function undo() {
+  const idx=[...paths].reverse().findIndex(p=>p.page===curPage);
+  if(idx===-1){toast('Nada que deshacer');return;}
+  paths.splice(paths.length-1-idx,1); redraw();
+}
+function clearPg() {
+  if(!confirm('¿Borrar anotaciones de esta página?'))return;
+  paths=paths.filter(p=>p.page!==curPage); activeSig=null; redraw();
+}
+
+// ── SIGNATURE ─────────────────────────────────────────────────────────────
+let sigC='#111', sigDrw=false, slx=0, sly=0;
+
+function openSigModal() {
+  if(!checkUse()) return;
+  $('sigmodal').classList.add('on');
+  setTimeout(()=>{
+    const W=Math.min(scv.parentElement.clientWidth-28,480), H=120;
+    scv.width=Math.round(W*PR); scv.height=Math.round(H*PR);
+    scv.style.width=W+'px'; scv.style.height=H+'px';
+    sctx.setTransform(PR,0,0,PR,0,0);
+    sctx.clearRect(0,0,W,H);
+  },40);
+  renderSavedSigs();
+}
+function closeSig() { $('sigmodal').classList.remove('on'); }
+function setSigCol(el) {
+  document.querySelectorAll('.sigcs .cdot').forEach(d=>d.classList.remove('on'));
+  el.classList.add('on'); sigC=el.dataset.c;
+}
+
+function sigXY(e) {
+  const r=scv.getBoundingClientRect();
+  let cx,cy;
+  if(e.touches&&e.touches.length){cx=e.touches[0].clientX;cy=e.touches[0].clientY;}
+  else if(e.changedTouches&&e.changedTouches.length){cx=e.changedTouches[0].clientX;cy=e.changedTouches[0].clientY;}
+  else{cx=e.clientX;cy=e.clientY;}
+  return{x:cx-r.left, y:cy-r.top};
+}
+scv.addEventListener('mousedown', e=>{sigDrw=true;const p=sigXY(e);slx=p.x;sly=p.y;});
+scv.addEventListener('touchstart',e=>{e.preventDefault();sigDrw=true;const p=sigXY(e);slx=p.x;sly=p.y;},{passive:false});
+scv.addEventListener('mousemove', drawSig);
+scv.addEventListener('touchmove', e=>{e.preventDefault();drawSig(e);},{passive:false});
+scv.addEventListener('mouseup',   ()=>sigDrw=false);
+scv.addEventListener('touchend',  ()=>sigDrw=false);
+scv.addEventListener('mouseleave',()=>sigDrw=false);
+
+function drawSig(e) {
+  if(!sigDrw)return;
+  const p=sigXY(e);
+  sctx.strokeStyle=sigC; sctx.lineWidth=2.5;
+  sctx.lineCap='round'; sctx.lineJoin='round';
+  sctx.setTransform(PR,0,0,PR,0,0);
+  sctx.beginPath(); sctx.moveTo(slx,sly); sctx.lineTo(p.x,p.y); sctx.stroke();
+  slx=p.x; sly=p.y;
+}
+function clearSig() { sctx.clearRect(0,0,scv.width,scv.height); }
+function saveSig() {
+  const url=scv.toDataURL();
+  savedSigs.push(url); if(savedSigs.length>6) savedSigs.shift();
+  localStorage.setItem('rb_sigs',JSON.stringify(savedSigs));
+  renderSavedSigs(); toast('Firma guardada','ok');
+}
+function useSig() {
+  if(!pdfDoc){toast('Abre un PDF primero','err');return;}
+  sigUrl=scv.toDataURL(); closeSig();
+  // Colocar centrada en la vista actual
+  const cx=pcv.clientWidth/2, cy=pcv.clientHeight/2;
+  paths.push({type:'sig',page:curPage,x:cx-100,y:cy-40,w:200,h:80,data:sigUrl});
+  redraw();
+  selIdx=paths.length-1; showSel();
+  setTool('cursor');
+  toast('Mueve y redimensiona la firma, luego toca ✓ Fijar','ok');
+}
+function confirmSig() {
+  // Mantenida por compatibilidad — ya no se usa en el flujo principal
+  hideSel();
+}
+function renderSavedSigs() {
+  const row=$('savsigs'); row.innerHTML='';
+  savedSigs.forEach((url,i)=>{
+    const w=document.createElement('div'); w.className='savsig';
+    const img=document.createElement('img'); img.src=url; img.width=80; img.height=40; img.style.display='block';
+    img.onclick=()=>{
+      if(!pdfDoc){toast('Abre un PDF primero','err');return;}
+      sigUrl=url; closeSig();
+      const cx2=pcv.clientWidth/2, cy2=pcv.clientHeight/2;
+      paths.push({type:'sig',page:curPage,x:cx2-100,y:cy2-40,w:200,h:80,data:sigUrl});
+      redraw(); selIdx=paths.length-1; showSel(); setTool('cursor');
+      toast('Mueve y redimensiona la firma, luego toca ✓ Fijar','ok');
+    };
+    const del=document.createElement('div'); del.className='ssdel'; del.textContent='×';
+    del.onclick=e=>{e.stopPropagation();savedSigs.splice(i,1);localStorage.setItem('rb_sigs',JSON.stringify(savedSigs));renderSavedSigs();};
+    w.appendChild(img); w.appendChild(del); row.appendChild(w);
+  });
+}
+
+// ── TEXT ──────────────────────────────────────────────────────────────────
+let txtFont='Arial', txtColor='#111';
+function openTxtModal() { $('txtmodal').classList.add('on'); setTimeout(()=>$('txtin').focus(),80); }
+function closeTxt() { $('txtmodal').classList.remove('on'); setTool('cursor'); }
+function setFont(el) { document.querySelectorAll('.fp').forEach(p=>p.classList.remove('on')); el.classList.add('on'); txtFont=el.dataset.font; }
+function setTxtCol(el) { el.parentElement.querySelectorAll('.cdot').forEach(d=>d.classList.remove('on')); el.classList.add('on'); txtColor=el.dataset.c; }
+function confirmTxtModal() {
+  if(!pdfDoc){toast('Abre un PDF primero','err');return;}
+  const t=$('txtin').value.trim();
+  if(!t){toast('Escribe un texto','err');return;}
+  txtOpts={text:t,font:txtFont,size:parseInt($('fsr').value),color:txtColor};
+  $('txtmodal').classList.remove('on');
+  placeTxt=true; placeSig=false;
+  xcv.style.cursor='crosshair';
+  $('ov').classList.add('on');
+  $('ovmsg').textContent='Toca el PDF para colocar el texto';
+  $('cfmsig').style.display='none'; $('cfmtxt').style.display='none';
+}
+function confirmTxt() {
+  placeTxt=false; $('ov').classList.remove('on'); $('cfmtxt').style.display='none';
+  setTool('cursor');
+}
+
+// ── SAVE PDF ──────────────────────────────────────────────────────────────
+function sharePDF() { openSaveModal(true); }
+function savePDF(share=false, docName='documento-firmado') {
+  if(!pdfDoc){toast('No hay PDF abierto','err');return;}
+  loading(true,'Generando PDF...');
+  PDFLib.PDFDocument.load(pdfRaw.slice(0)).then(doc=>{
+    const chain=[];
+    for(let pn=1;pn<=totPages;pn++){
+      const pp=paths.filter(p=>p.page===pn);
+      if(!pp.length) continue;
+      chain.push(
+        pdfDoc.getPage(pn).then(page=>{
+          const vp=page.getViewport({scale});
+          const tmp=document.createElement('canvas');
+          tmp.width=Math.round(vp.width*PR); tmp.height=Math.round(vp.height*PR);
+          const tx=tmp.getContext('2d'); tx.setTransform(PR,0,0,PR,0,0);
+          const draws=pp.map(p=>{
+            tx.save();
+            if(p.type==='draw'){tx.strokeStyle=p.color;tx.lineWidth=p.width;tx.lineCap='round';tx.lineJoin='round';tx.beginPath();p.pts.forEach((pt,i)=>i===0?tx.moveTo(pt.x,pt.y):tx.lineTo(pt.x,pt.y));tx.stroke();tx.restore();return Promise.resolve();}
+            if(p.type==='hi'){tx.globalAlpha=.35;tx.strokeStyle=p.color;tx.lineWidth=p.width;tx.lineCap='square';tx.lineJoin='square';tx.beginPath();p.pts.forEach((pt,i)=>i===0?tx.moveTo(pt.x,pt.y):tx.lineTo(pt.x,pt.y));tx.stroke();tx.restore();return Promise.resolve();}
+            if(p.type==='text'){tx.fillStyle=p.color;tx.font=`${p.size}px ${p.font}`;tx.fillText(p.text,p.x,p.y);tx.restore();return Promise.resolve();}
+            if(p.type==='sig'){tx.restore();return new Promise(res=>{const img=new Image();img.onload=()=>{tx.drawImage(img,p.x,p.y,p.w,p.h);res();};img.src=p.data;});}
+            tx.restore(); return Promise.resolve();
+          });
+          return Promise.all(draws).then(()=>fetch(tmp.toDataURL('image/png')).then(r=>r.arrayBuffer())).then(b=>doc.embedPng(b)).then(img=>{const pg=doc.getPage(pn-1);const s=pg.getSize();pg.drawImage(img,{x:0,y:0,width:s.width,height:s.height});});
+        })
+      );
+    }
+    return Promise.all(chain).then(()=>doc.save());
+  }).then(bytes=>{
+    loading(false);
+    const blob=new Blob([bytes],{type:'application/pdf'});
+    if(share&&navigator.share){navigator.share({files:[new File([blob],docName+'.pdf',{type:'application/pdf'})]}).catch(()=>dl(blob,docName));}
+    else dl(blob,docName);
+    toast('PDF guardado ✓','ok');
+  }).catch(e=>{loading(false);toast('Error: '+e.message,'err');});
+}
+function dl(blob,name='documento-firmado'){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name.replace(/\.pdf$/i,'')+'.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+
+// ── THUMBNAILS ────────────────────────────────────────────────────────────
+let thumbsBuilt=false;
+function toggleThumbs(){
+  const p=$('thumbs'),v=p.classList.toggle('on');
+  mainEl.style.paddingLeft=v?'76px':'';
+  if(v&&!thumbsBuilt&&pdfDoc) buildThumbs();
+}
+function buildThumbs(){
+  const p=$('thumbs'); p.innerHTML=''; thumbsBuilt=true;
+  for(let i=1;i<=totPages;i++){
+    const w=document.createElement('div'); w.className='thi'+(i===curPage?' on':''); w.dataset.page=i;
+    const cv=document.createElement('canvas'), lbl=document.createElement('div');
+    lbl.className='thn'; lbl.textContent=i;
+    w.appendChild(cv); w.appendChild(lbl);
+    w.onclick=()=>{curPage=i;renderPage(i).then(()=>{mainEl.scrollTop=0;updateNav();updateThumbActive();});};
+    p.appendChild(w);
+    pdfDoc.getPage(i).then(pg=>{const vp=pg.getViewport({scale:.15});cv.width=Math.round(vp.width);cv.height=Math.round(vp.height);pg.render({canvasContext:cv.getContext('2d'),viewport:vp});});
+  }
+}
+function updateThumbActive(){document.querySelectorAll('.thi').forEach(el=>el.classList.toggle('on',parseInt(el.dataset.page)===curPage));}
+
+// Swipe pages on mobile
+let tsx=0,tsy=0;
+mainEl.addEventListener('touchstart',e=>{tsx=e.touches[0].clientX;tsy=e.touches[0].clientY;},{passive:true});
+mainEl.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tsx, dy=e.changedTouches[0].clientY-tsy;
+  if(Math.abs(dx)>65&&Math.abs(dx)>Math.abs(dy)*1.5) goPage(dx<0?1:-1);
+});
+
+// Pinch zoom
+let pd0=0,ps0=1;
+mainEl.addEventListener('touchstart',e=>{if(e.touches.length===2){pd0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);ps0=scale;e.preventDefault();}},{passive:false});
+let prt;
+mainEl.addEventListener('touchmove',e=>{
+  if(e.touches.length===2){e.preventDefault();
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    scale=Math.max(baseScale*.3,Math.min(ps0*4,ps0*(d/pd0)));
+    clearTimeout(prt); prt=setTimeout(()=>renderPage(curPage).then(()=>$('zlbl').textContent=Math.round(scale/baseScale*100)+'%'),80);
+  }
+},{passive:false});
+
+// Resize
+let rzt;
+window.addEventListener('resize',()=>{clearTimeout(rzt);rzt=setTimeout(()=>{if(!pdfDoc)return;pdfDoc.getPage(curPage).then(p=>{const vp=p.getViewport({scale:1});baseScale=scale=(mainEl.clientWidth-28)/vp.width;renderPage(curPage);});},250);});
+
+// ── SCANNER ───────────────────────────────────────────────────────────────
+function ensureCV(){return new Promise(r=>{if(cvReady){r();return;}if(window.cv&&window.cv.Mat){cvReady=true;r();return;}const s=document.createElement('script');s.src='https://docs.opencv.org/4.8.0/opencv.js';s.async=true;s.onload=()=>{let n=0;const t=setInterval(()=>{n++;if(window.cv&&window.cv.Mat){clearInterval(t);cvReady=true;r();}if(n>60){clearInterval(t);r();}},100);};document.head.appendChild(s);});}
+function openScanner(){
+  if(!isPro&&getUses()>=FREE){openProModal('limit');return;}
+  scanPages=[];flash=false;$('flashbtn').classList.remove('on');
+  $('scan').classList.add('on');$('shint').textContent='Iniciando cámara...';
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}},audio:false})
+    .catch(()=>navigator.mediaDevices.getUserMedia({video:true,audio:false}))
+    .then(s=>{stream=s;const v=$('svid');v.srcObject=s;v.play();$('shint').textContent='Centra el documento y dispara';ensureCV();})
+    .catch(e=>{$('scan').classList.remove('on');toast('Sin acceso a cámara: '+(e.name||e),'err');});
+}
+function closeScanner(){
+  if(flash&&stream){const tr=stream.getVideoTracks()[0];if(tr&&typeof tr.getCapabilities==='function'&&tr.getCapabilities().torch)tr.applyConstraints({advanced:[{torch:false}]}).catch(()=>{});flash=false;$('flashbtn').classList.remove('on');}
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  $('scan').classList.remove('on');
+  if(scanPages.length>0) buildScanPDF();
+}
+function toggleFlash(){
+  if(!stream)return;const tr=stream.getVideoTracks()[0];
+  if(!tr||tr.readyState!=='live'){toast('Cámara no lista','err');return;}
+  const caps=typeof tr.getCapabilities==='function'?tr.getCapabilities():{};
+  if(!caps.torch){toast('Flash no disponible','err');return;}
+  flash=!flash;tr.applyConstraints({advanced:[{torch:flash}]}).then(()=>$('flashbtn').classList.toggle('on',flash)).catch(()=>{flash=!flash;toast('No se pudo activar el flash','err');});
+}
+function takeShot(){
+  const v=$('svid');if(!v.videoWidth){toast('Cámara iniciando...','err');return;}
+  const fl=document.createElement('div');fl.style.cssText='position:fixed;inset:0;background:#fff;opacity:.7;z-index:999;pointer-events:none;transition:opacity .15s';document.body.appendChild(fl);setTimeout(()=>{fl.style.opacity='0';setTimeout(()=>fl.remove(),150);},80);
+  const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);
+  curPhoto=c;$('scan').classList.remove('on');setTimeout(()=>openCrop(c),60);
+}
+function openCrop(photo){
+  const m=$('crop'),crcv=$('cropcv'),wrap=$('cropwrap'),bar=$('cropbar');
+  m.classList.add('on');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const aW=window.innerWidth,bH=bar.offsetHeight||160,aH=window.innerHeight-bH;
+    const ratio=Math.min(aW/photo.width,aH/photo.height);
+    cpDispW=Math.round(photo.width*ratio);cpDispH=Math.round(photo.height*ratio);
+    cpImgW=photo.width;cpImgH=photo.height;
+    cpOX=Math.round((aW-cpDispW)/2);cpOY=Math.round((aH-cpDispH)/2);
+    wrap.style.height=aH+'px';
+    crcv.width=cpDispW;crcv.height=cpDispH;
+    crcv.style.cssText=`position:absolute;left:${cpOX}px;top:${cpOY}px;width:${cpDispW}px;height:${cpDispH}px`;
+    crcv.getContext('2d').drawImage(photo,0,0,cpDispW,cpDispH);
+    const svg=$('cropsvg');svg.style.cssText=`position:absolute;left:${cpOX}px;top:${cpOY}px;overflow:visible;pointer-events:none;z-index:2`;svg.setAttribute('width',cpDispW);svg.setAttribute('height',cpDispH);
+    const mx=Math.round(cpDispW*.08),my=Math.round(cpDispH*.08);
+    cpPts=[{x:mx,y:my},{x:cpDispW-mx,y:my},{x:cpDispW-mx,y:cpDispH-my},{x:mx,y:cpDispH-my}];
+    updateCropUI();$('cropinfo').textContent='Ajusta las esquinas del documento';
+    ensureCV().then(()=>{try{const p=detectCorners(photo);cpPts=p.map(pt=>({x:Math.round(pt.x*ratio),y:Math.round(pt.y*ratio)}));updateCropUI();$('cropinfo').textContent='Documento detectado';}catch(e){}}).catch(()=>{});
+  }));
+}
+function detectCorners(canvas){
+  const w=canvas.width,h=canvas.height,mx=Math.round(w*.08),my=Math.round(h*.08);
+  const def=[{x:mx,y:my},{x:w-mx,y:my},{x:w-mx,y:h-my},{x:mx,y:h-my}];
+  if(!cvReady||!window.cv||!window.cv.Mat)return def;
+  try{
+    const src=cv.imread(canvas),gray=new cv.Mat(),blur=new cv.Mat(),edges=new cv.Mat(),hier=new cv.Mat(),conts=new cv.MatVector();
+    cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);cv.GaussianBlur(gray,blur,new cv.Size(5,5),0);cv.Canny(blur,edges,50,150);
+    const k=cv.Mat.ones(3,3,cv.CV_8U);try{cv.dilate(edges,edges,k);}finally{k.delete();}
+    cv.findContours(edges,conts,hier,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE);
+    let best=null,bA=0;
+    for(let i=0;i<conts.size();i++){const cnt=conts.get(i),area=cv.contourArea(cnt),peri=cv.arcLength(cnt,true),approx=new cv.Mat();cv.approxPolyDP(cnt,approx,0.02*peri,true);if(approx.rows===4&&area>bA&&area>w*h*.1){bA=area;best=[];for(let r=0;r<4;r++)best.push({x:approx.data32S[r*2],y:approx.data32S[r*2+1]});}approx.delete();cnt.delete();}
+    src.delete();gray.delete();blur.delete();edges.delete();hier.delete();conts.delete();
+    if(best){best.sort((a,b)=>a.y-b.y);const top=best.slice(0,2).sort((a,b)=>a.x-b.x),bot=best.slice(2,4).sort((a,b)=>a.x-b.x);return[top[0],top[1],bot[1],bot[0]];}
+  }catch(e){console.warn(e);}
+  return def;
+}
+function updateCropUI(){
+  const svg=$('cropsvg');
+  svg.innerHTML=`<path d="M${cpPts.map(p=>p.x+','+p.y).join('L')}Z" fill="rgba(37,99,235,.15)" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round"/>`;
+  ['cp0','cp1','cp2','cp3'].forEach((id,i)=>{const el=$(id);el.style.left=(cpPts[i].x+cpOX)+'px';el.style.top=(cpPts[i].y+cpOY)+'px';makeDrag(el,i);});
+}
+function makeDrag(el,idx){
+  el.onmousedown=e=>{e.preventDefault();startDrag(e.clientX,e.clientY,idx);};
+  el.ontouchstart=e=>{e.preventDefault();startDrag(e.touches[0].clientX,e.touches[0].clientY,idx);};
+}
+function startDrag(cx,cy,idx){
+  const ox=cpPts[idx].x,oy=cpPts[idx].y;
+  const mm=e=>{const tx=e.touches?e.touches[0].clientX:e.clientX,ty=e.touches?e.touches[0].clientY:e.clientY;cpPts[idx].x=Math.max(0,Math.min(cpDispW,ox+(tx-cx)));cpPts[idx].y=Math.max(0,Math.min(cpDispH,oy+(ty-cy)));updateCropUI();};
+  const mu=()=>{document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);document.removeEventListener('touchmove',mm);document.removeEventListener('touchend',mu);};
+  document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);document.addEventListener('touchmove',mm,{passive:false});document.addEventListener('touchend',mu);
+}
+function rejectCrop(){$('crop').classList.remove('on');$('scan').classList.add('on');curPhoto=null;}
+function setFil(el){document.querySelectorAll('.filp').forEach(p=>p.classList.remove('on'));el.classList.add('on');scanFil=el.dataset.f;}
+function applyCrop(){
+  if(!curPhoto)return;$('cropinfo').textContent='Procesando...';
+  const rX=cpImgW/cpDispW,rY=cpImgH/cpDispH;
+  const src=cpPts.map(p=>({x:Math.round(p.x*rX),y:Math.round(p.y*rY)}));
+  const dW=Math.round(Math.max(dist(src[0],src[1]),dist(src[3],src[2]))),dH=Math.round(Math.max(dist(src[0],src[3]),dist(src[1],src[2])));
+  const out=document.createElement('canvas');out.width=dW;out.height=dH;
+  const ctx=out.getContext('2d');
+  if(cvReady&&window.cv&&window.cv.Mat){
+    try{
+      const sm=cv.imread(curPhoto),sp=cv.matFromArray(4,1,cv.CV_32FC2,[src[0].x,src[0].y,src[1].x,src[1].y,src[2].x,src[2].y,src[3].x,src[3].y]),dp=cv.matFromArray(4,1,cv.CV_32FC2,[0,0,dW,0,dW,dH,0,dH]),M=cv.getPerspectiveTransform(sp,dp),w=new cv.Mat();
+      cv.warpPerspective(sm,w,M,new cv.Size(dW,dH));cv.imshow(out,w);
+      sm.delete();sp.delete();dp.delete();M.delete();w.delete();
+    }catch(e){warp(ctx,curPhoto,src,dW,dH);}
+  }else{warp(ctx,curPhoto,src,dW,dH);}
+  applyFil(ctx,dW,dH);
+  scanPages.push(out.toDataURL('image/jpeg',.92));
+  $('crop').classList.remove('on');$('scan').classList.add('on');
+  $('shint').textContent=`Página ${scanPages.length} lista — dispara otra o cierra para PDF`;
+  curPhoto=null;
+}
+function dist(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2);}
+function warp(ctx,src,pts,dW,dH){const steps=Math.min(dH,300);for(let y=0;y<steps;y++){const t=y/steps,t1=(y+1)/steps,sx0=pts[0].x+(pts[3].x-pts[0].x)*t,sy0=pts[0].y+(pts[3].y-pts[0].y)*t,sx1=pts[1].x+(pts[2].x-pts[1].x)*t,sy1=pts[1].y+(pts[2].y-pts[1].y)*t,sx0b=pts[0].x+(pts[3].x-pts[0].x)*t1,sy0b=pts[0].y+(pts[3].y-pts[0].y)*t1,sx1b=pts[1].x+(pts[2].x-pts[1].x)*t1,dSH=Math.ceil(dH/steps)+1,dSY=Math.round(t*dH),scX=(sx1-sx0)/dW,skX=(sx1b-sx0b)/dW-scX;ctx.save();ctx.beginPath();ctx.rect(0,dSY,dW,dSH);ctx.clip();ctx.setTransform(scX,(sy1-sy0)/dW,skX,dSH/src.height*steps,sx0,sy0);ctx.drawImage(src,0,0);ctx.restore();}}
+function applyFil(ctx,w,h){if(scanFil==='color')return;const d=ctx.getImageData(0,0,w,h),px=d.data;for(let i=0;i<px.length;i+=4){const r=px[i],g=px[i+1],b=px[i+2],gr=r*.299+g*.587+b*.114;if(scanFil==='bw'){const v=gr>128?255:0;px[i]=px[i+1]=px[i+2]=v;}else if(scanFil==='contrast'){px[i]=Math.min(255,Math.max(0,(r-128)*1.6+128));px[i+1]=Math.min(255,Math.max(0,(g-128)*1.6+128));px[i+2]=Math.min(255,Math.max(0,(b-128)*1.6+128));}else if(scanFil==='sepia'){px[i]=Math.min(255,r*.393+g*.769+b*.189);px[i+1]=Math.min(255,r*.349+g*.686+b*.168);px[i+2]=Math.min(255,r*.272+g*.534+b*.131);}}ctx.putImageData(d,0,0);}
+function buildScanPDF(){
+  if(!scanPages.length)return;
+  loading(true,'Creando PDF escaneado...');
+  PDFLib.PDFDocument.create().then(doc=>{
+    let chain=Promise.resolve();
+    scanPages.forEach(url=>{chain=chain.then(()=>fetch(url).then(r=>r.arrayBuffer()).then(b=>doc.embedJpg(b)).then(img=>{const pg=doc.addPage([img.width,img.height]);pg.drawImage(img,{x:0,y:0,width:img.width,height:img.height});}));});
+    return chain.then(()=>doc.save());
+  }).then(bytes=>{
+    scanPages=[];pdfRaw=bytes.buffer.slice(0);
+    return pdfjsLib.getDocument({data:new Uint8Array(bytes)}).promise;
+  }).then(doc=>{
+    pdfDoc=doc;totPages=doc.numPages;curPage=1;paths=[];activeSig=null;
+    return pdfDoc.getPage(1);
+  }).then(p1=>{
+    const vp=p1.getViewport({scale:1});baseScale=scale=(mainEl.clientWidth-28)/vp.width;
+    $('dz').style.display='none';cw.style.display='block';$('savebtn').style.display='';$('dock').classList.add('on');$('zfloat').classList.add('on');updateNav();return renderPage(1);
+  }).then(()=>{loading(false);toast('PDF escaneado listo ✓','ok');})
+  .catch(e=>{loading(false);toast('Error: '+e.message,'err');});
+}
+
+// ── PWA ───────────────────────────────────────────────────────────────────
+
+// ── SELECCIÓN ────────────────────────────────────────────────────────────
+let selIdx = -1;
+function itmBounds(it) {
+  if (!it) return null;
+  if (it.type==='sig')  return {x:it.x,y:it.y,w:it.w,h:it.h};
+  if (it.type==='text') return {x:it.x,y:it.y-it.size,w:Math.max(it.size*it.text.length*.65,it.size*2),h:it.size*1.6};
+  return null;
+}
+function hitItm(px,py) {
+  for(let i=paths.length-1;i>=0;i--){
+    const it=paths[i]; if(it.page!==curPage) continue;
+    if(it.type!=='text'&&it.type!=='sig') continue;
+    const b=itmBounds(it);
+    if(b&&px>=b.x-10&&px<=b.x+b.w+10&&py>=b.y-10&&py<=b.y+b.h+10) return i;
+  }
+  return -1;
+}
+function showSel() {
+  const box=$('selbox');
+  if(selIdx<0||selIdx>=paths.length){box.classList.remove('on');return;}
+  const b=itmBounds(paths[selIdx]);
+  if(!b){box.classList.remove('on');return;}
+  box.style.left=b.x+'px';box.style.top=b.y+'px';
+  box.style.width=b.w+'px';box.style.height=b.h+'px';
+  box.classList.add('on');
+}
+function hideSel(){selIdx=-1;$('selbox').classList.remove('on');}
+$('seldel').addEventListener('click',e=>{e.stopPropagation();if(selIdx<0)return;paths.splice(selIdx,1);hideSel();redraw();toast('Eliminado');});
+function startSelDrag(e,mode) {
+  if(selIdx<0||selIdx>=paths.length) return;
+  e.stopPropagation(); if(e.cancelable) e.preventDefault();
+  const getC=ev=>{const s=(ev.touches&&ev.touches.length)?ev.touches[0]:(ev.changedTouches&&ev.changedTouches.length)?ev.changedTouches[0]:ev;return{x:s.clientX,y:s.clientY};};
+  const c0=getC(e),it=paths[selIdx],sn={x:it.x,y:it.y,w:it.w||0,h:it.h||0,size:it.size||14};
+  function onMove(ev){
+    if(ev.cancelable) ev.preventDefault();
+    const c=getC(ev),dx=c.x-c0.x,dy=c.y-c0.y;
+    if(mode==='move'){it.x=sn.x+dx;it.y=sn.y+dy;}
+    else if(it.type==='sig'){
+      if(mode==='br'){it.w=Math.max(40,sn.w+dx);it.h=Math.max(20,sn.h+dy);}
+      else if(mode==='bl'){const nw=Math.max(40,sn.w-dx);it.x=sn.x+(sn.w-nw);it.w=nw;it.h=Math.max(20,sn.h+dy);}
+      else if(mode==='tr'){it.w=Math.max(40,sn.w+dx);const nh=Math.max(20,sn.h-dy);it.y=sn.y+(sn.h-nh);it.h=nh;}
+      else if(mode==='tl'){const nw=Math.max(40,sn.w-dx);it.x=sn.x+(sn.w-nw);it.w=nw;const nh=Math.max(20,sn.h-dy);it.y=sn.y+(sn.h-nh);it.h=nh;}
+    } else if(it.type==='text'){
+      const d=(mode==='br'||mode==='tr')?dx:-dx;
+      it.size=Math.max(8,Math.min(160,Math.round(sn.size+d*0.5)));
+    }
+    redraw();showSel();
+  }
+  function onUp(){document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);document.removeEventListener('touchmove',onMove);document.removeEventListener('touchend',onUp);}
+  document.addEventListener('mousemove',onMove);document.addEventListener('mouseup',onUp);
+  document.addEventListener('touchmove',onMove,{passive:false});document.addEventListener('touchend',onUp);
+}
+$('selbody').addEventListener('mousedown',e=>startSelDrag(e,'move'));
+$('selbody').addEventListener('touchstart',e=>{e.preventDefault();startSelDrag(e,'move');},{passive:false});
+['tl','tr','bl','br'].forEach(dir=>{
+  const el=$('sh-'+dir);
+  el.addEventListener('mousedown',e=>{e.stopPropagation();startSelDrag(e,dir);});
+  el.addEventListener('touchstart',e=>{e.stopPropagation();e.preventDefault();startSelDrag(e,dir);},{passive:false});
+});
+
+// ── POLÍTICA DE PRIVACIDAD ────────────────────────────────────
+function openPrivacy() { $('privmodal').classList.add('on'); }
+function closePrivacy() { $('privmodal').classList.remove('on'); }
+
+// ── MODAL GUARDAR CON NOMBRE ──────────────────────────────────
+let _saveShare = false;
+function openSaveModal(share=false) {
+  if(!pdfDoc){toast('No hay PDF abierto','err');return;}
+  _saveShare = share;
+  // Sugerir nombre basado en el archivo actual o genérico
+  const inp = $('savename');
+  if(inp.value==='documento-firmado' || !inp.value) inp.value='documento-firmado';
+  $('savemodal').classList.add('on');
+  setTimeout(()=>{ inp.select(); }, 80);
+}
+function closeSaveModal() { $('savemodal').classList.remove('on'); }
+function doSaveWithName(share=false) {
+  const name = ($('savename').value.trim() || 'documento-firmado').replace(/\.pdf$/i,'');
+  closeSaveModal();
+  savePDF(share || _saveShare, name);
+}
+
+// ── CREAR NUEVO DOCUMENTO (PLANTILLAS) ───────────────────────
+// ── EDITOR TIPO WORD ──────────────────────────────────────────
+function openNewDoc() {
+  $('wordeditor').classList.add('on');
+  const pg = $('wepage');
+  if (!pg.innerHTML.trim()) {
+    pg.innerHTML = '<p><br></p>';
+  }
+  setTimeout(() => { pg.focus(); }, 100);
+}
+
+function closeWordEditor() {
+  $('wordeditor').classList.remove('on');
+}
+
+function weCmd(cmd, val=null) {
+  $('wepage').focus();
+  document.execCommand(cmd, false, val);
+  weUpdateToolbar();
+}
+
+function weUpdateToolbar() {
+  ['bold','italic','underline','strikethrough'].forEach(cmd => {
+    const btn = $('we-' + cmd);
+    if (btn) btn.classList.toggle('on', document.queryCommandState(cmd));
+  });
+}
+
+function weUpdateCount() {
+  const text = $('wepage').innerText || '';
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const chars = text.replace(/\n/g,'').length;
+  $('wecount').textContent = words + ' palabras · ' + chars + ' caracteres';
+}
+
+function weConvertToPDF() {
+  const pg = $('wepage');
+  const html = pg.innerHTML;
+  if (!html.trim() || html === '<p><br></p>') {
+    toast('El documento está vacío','err'); return;
+  }
+
+  loading(true, 'Convirtiendo a PDF...');
+  closeWordEditor();
+
+  // Usar pdf-lib para crear PDF con el contenido del editor
+  // Procesamos el HTML del contenteditable en bloques de texto
+  PDFLib.PDFDocument.create().then(async doc => {
+    const { rgb, StandardFonts } = PDFLib;
+    const W = 595, H = 842, ML = 56, MR = 56, MT = 60, MB = 56;
+    const maxW = W - ML - MR;
+
+    let page = doc.addPage([W, H]);
+    let yPos = H - MT;
+
+    const fReg  = await doc.embedFont(StandardFonts.Helvetica);
+    const fBold = await doc.embedFont(StandardFonts.HelveticaBold);
+    const fIta  = await doc.embedFont(StandardFonts.HelveticaOblique);
+    const fBoldIta = await doc.embedFont(StandardFonts.HelveticaBoldOblique);
+
+    // Parsear el HTML del editor en líneas con formato
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+
+    function hexToRgb(hex) {
+      hex = hex.replace('#','');
+      if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+      const n = parseInt(hex, 16);
+      return rgb(((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255);
+    }
+
+    function getFontSize(el) {
+      // execCommand fontSize usa 1-7
+      const s = el.style && el.style.fontSize;
+      if (s) {
+        const n = parseFloat(s);
+        if (s.includes('pt')) return n;
+        if (s.includes('px')) return n * 0.75;
+        return n;
+      }
+      const sz = el.getAttribute && el.getAttribute('size');
+      if (sz) return [8,10,12,14,18,24,36][parseInt(sz)-1] || 12;
+      return null;
+    }
+
+    function getColor(el) {
+      const c = el.style && el.style.color;
+      if (c && c.startsWith('#')) return hexToRgb(c);
+      if (c && c.startsWith('rgb')) {
+        const m = c.match(/rgb\((\d+),(\d+),(\d+)\)/);
+        if (m) return rgb(+m[1]/255, +m[2]/255, +m[3]/255);
+      }
+      return null;
+    }
+
+    // Extraer bloques: cada <p>, <div>, <h1-h6>, <li>
+    function getBlocks(container) {
+      const blocks = [];
+      const blockTags = new Set(['P','DIV','H1','H2','H3','H4','H5','H6','LI','BR','BLOCKQUOTE']);
+      function walk(node, fmt) {
+        if (node.nodeType === 3) {
+          // texto
+          const txt = node.textContent;
+          if (txt) blocks[blocks.length-1]?.spans.push({text:txt, ...fmt});
+          return;
+        }
+        const tag = node.tagName;
+        if (!tag) return;
+        // Nuevo bloque
+        if (blockTags.has(tag) && blocks.length > 0 || tag === 'BR') {
+          blocks.push({spans:[], align:'left', size:12, isHeading:false, isList:false});
+        }
+        if (!blocks.length) blocks.push({spans:[], align:'left', size:12});
+
+        // Heredar formato
+        let f = {...fmt};
+        if (tag === 'B' || tag === 'STRONG') f.bold = true;
+        if (tag === 'I' || tag === 'EM')     f.italic = true;
+        if (tag === 'U')                      f.underline = true;
+        if (tag === 'S' || tag === 'STRIKE')  f.strike = true;
+        if (['H1','H2','H3'].includes(tag))   { f.bold = true; f.size = tag==='H1'?22:tag==='H2'?18:14; }
+        if (tag === 'LI') { blocks[blocks.length-1].isList = true; blocks[blocks.length-1].bullet = '• '; }
+
+        const sz = getFontSize(node);
+        if (sz) f.size = sz;
+        const col = getColor(node);
+        if (col) f.color = col;
+
+        // Alineación
+        const ta = node.style && node.style.textAlign;
+        if (ta) blocks[blocks.length-1].align = ta;
+
+        node.childNodes.forEach(ch => walk(ch, f));
+
+        if (blockTags.has(tag)) {
+          blocks.push({spans:[], align:'left', size:12});
+        }
+      }
+      blocks.push({spans:[], align:'left', size:12});
+      container.childNodes.forEach(ch => walk(ch, {bold:false, italic:false, underline:false, size:12, color:rgb(0.07,0.07,0.07)}));
+      return blocks.filter(b => b.spans.length > 0 || b.isList);
+    }
+
+    function chooseFont(bold, italic) {
+      if (bold && italic) return fBoldIta;
+      if (bold)           return fBold;
+      if (italic)         return fIta;
+      return fReg;
+    }
+
+    function addPage() {
+      page = doc.addPage([W, H]);
+      yPos = H - MT;
+      return page;
+    }
+
+    function drawLine(spans, size, align, bullet) {
+      if (yPos < MB + size + 4) addPage();
+
+      // Calcular texto completo para alineación
+      let totalW = 0;
+      const rendered = spans.map(sp => {
+        const f = chooseFont(sp.bold, sp.italic);
+        const w = f.widthOfTextAtSize(sp.text, size);
+        totalW += w;
+        return {f, w, sp};
+      });
+
+      let xOff = ML;
+      if (bullet) {
+        page.drawText(bullet, {x:ML, y:yPos, size, font:fReg, color:rgb(0.3,0.3,0.3)});
+        xOff = ML + fReg.widthOfTextAtSize(bullet, size) + 2;
+        totalW += xOff - ML;
+      }
+
+      if (align === 'center') xOff = (W - totalW) / 2;
+      else if (align === 'right') xOff = W - MR - totalW;
+
+      rendered.forEach(({f, w, sp}) => {
+        page.drawText(sp.text, {
+          x: xOff, y: yPos,
+          size: sp.size || size,
+          font: f,
+          color: sp.color || rgb(0.07,0.07,0.07)
+        });
+        xOff += w;
+      });
+
+      yPos -= size * 1.6;
+    }
+
+    function wrapAndDraw(spans, size, align, bullet) {
+      if (!spans.length) { yPos -= size * 1.2; return; }
+
+      // Unir todo el texto para calcular wrapping
+      const fullText = spans.map(s=>s.text).join('');
+      const words = fullText.split(' ');
+      const lineW = maxW - (bullet ? fReg.widthOfTextAtSize(bullet, size) + 4 : 0);
+
+      let line = '';
+      const lines = [];
+      for (const word of words) {
+        const test = line ? line + ' ' + word : word;
+        const w = fReg.widthOfTextAtSize(test, size);
+        if (w > lineW && line) { lines.push(line); line = word; }
+        else line = test;
+      }
+      if (line) lines.push(line);
+
+      // Repartir spans por líneas (simplificado: mismos estilos por párrafo)
+      lines.forEach((ln, i) => {
+        const lineSpans = [{...spans[0], text: ln}];
+        drawLine(lineSpans, size, align, i===0 ? bullet : (bullet ? '  ' : null));
+      });
+    }
+
+    const blocks = getBlocks(tmp);
+    for (const block of blocks) {
+      const size = block.spans[0]?.size || 12;
+      const align = block.align || 'left';
+      wrapAndDraw(block.spans, size, align, block.bullet || null);
+    }
+
+    return doc.save();
+
+  }).then(bytes => {
+    loading(false);
+    pdfRaw = bytes.buffer.slice(0);
+    return pdfjsLib.getDocument({data: new Uint8Array(bytes)}).promise;
+  }).then(doc => {
+    pdfDoc=doc; totPages=doc.numPages; curPage=1; paths=[]; activeSig=null; hideSel();
+    return pdfDoc.getPage(1);
+  }).then(p1 => {
+    const vp = p1.getViewport({scale:1});
+    baseScale = scale = (mainEl.clientWidth - 28) / vp.width;
+    $('dz').style.display = 'none'; cw.style.display = 'block';
+    $('savebtn').style.display = ''; $('dock').classList.add('on');
+    $('zfloat').classList.add('on');
+    updateNav(); return renderPage(1);
+  }).then(() => {
+    loading(false);
+    $('savename').value = 'mi-documento';
+    toast('Documento convertido a PDF ✓', 'ok');
+  }).catch(e => { loading(false); toast('Error: ' + e.message, 'err'); console.error(e); });
+}
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
