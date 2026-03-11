@@ -8,10 +8,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#2563eb">
 <link rel="manifest" href="manifest.json">
-<title>Rúbrica — Firma PDF</title>
+<title>Rúbrica.PDF — Firma PDF</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@700&family=Bebas+Neue&family=Pacifico&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -309,7 +310,7 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
 .wesel{height:30px;padding:0 6px;border-radius:6px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-size:.75rem;cursor:pointer;outline:none}
 #wearea{flex:1;overflow-y:auto;padding:20px;display:flex;justify-content:center;background:#e8eaed}
 [data-theme="dark"] #wearea{background:#1a1a2a}
-#wepage{width:210mm;min-height:297mm;background:#fff;padding:20mm 25mm;box-shadow:0 2px 20px rgba(0,0,0,.15);outline:none;font-family:Arial,sans-serif;font-size:12pt;line-height:1.6;color:#111;caret-color:#2563eb}
+#wepage{width:210mm;min-height:297mm;background:#fff;padding:25mm 30mm;box-shadow:0 2px 20px rgba(0,0,0,.15);outline:none;font-family:Arial,sans-serif;font-size:12pt;line-height:1.6;color:#111;caret-color:#2563eb;position:relative}
 [data-theme="dark"] #wepage{background:#1e1e2e;color:#e2e8f0}
 #wepage:focus{outline:none}
 #wefoot{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--s1);border-top:1px solid var(--bd);flex-shrink:0;gap:8px;flex-wrap:wrap}
@@ -317,6 +318,37 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
 /* ── MODAL GUARDAR ──────────────────────────────────────────── */
 #savename{width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;outline:none;transition:.15s}
 #savename:focus{border-color:var(--acc)}
+
+/* ── MENÚ ⋮ ────────────────────────────────────────────────── */
+#topmenu{position:absolute;top:calc(var(--st)+50px);right:8px;background:var(--s1);border:1px solid var(--bd);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:100;min-width:180px;display:none;flex-direction:column;overflow:hidden}
+#topmenu.on{display:flex}
+.tmitem{display:flex;align-items:center;gap:10px;padding:11px 16px;font-size:.82rem;font-weight:600;color:var(--tx2);cursor:pointer;border:none;background:transparent;width:100%;text-align:left;transition:.12s}
+.tmitem:hover{background:var(--s2);color:var(--tx)}
+.tmitem svg{flex-shrink:0;opacity:.7}
+.tmsep{height:1px;background:var(--bd);margin:3px 0}
+
+/* ── CREADOR QR ─────────────────────────────────────────────── */
+#qrpreview{width:180px;height:180px;margin:0 auto;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--bd)}
+#qrpreview canvas,#qrpreview img{border-radius:8px}
+.qropt{display:flex;flex-direction:column;gap:4px;padding:0 14px}
+.qropt label{font-size:.72rem;color:var(--tx2);font-weight:600}
+.qropt input,.qropt select,.qropt textarea{padding:8px 11px;border-radius:8px;border:1.5px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'Plus Jakarta Sans',sans-serif;font-size:.82rem;outline:none;transition:.15s;width:100%;box-sizing:border-box}
+.qropt input:focus,.qropt textarea:focus{border-color:var(--acc)}
+.qropt textarea{resize:none;height:68px}
+.qrsizetabs{display:flex;gap:6px;margin-top:2px}
+.qrsizetab{flex:1;padding:7px 4px;border-radius:7px;border:1.5px solid var(--bd);background:var(--s2);color:var(--tx2);font-size:.72rem;font-weight:700;cursor:pointer;text-align:center;transition:.12s}
+.qrsizetab.on{background:rgba(37,99,235,.1);border-color:var(--acc);color:var(--acc)}
+
+/* ── Imágenes flotantes en editor Word ─── */
+.we-img-wrap{position:absolute;cursor:move;user-select:none;touch-action:none;z-index:10}
+.we-img-wrap img{display:block;width:100%;height:100%;pointer-events:none;border-radius:2px}
+.we-img-wrap.selected{outline:2.5px solid #2563eb}
+.we-img-wrap .we-resize{position:absolute;width:14px;height:14px;background:#2563eb;border:2px solid #fff;border-radius:50%;bottom:-7px;right:-7px;cursor:se-resize;display:none;z-index:11}
+.we-img-wrap.selected .we-resize{display:block}
+.we-img-wrap .we-del{position:absolute;top:-10px;right:-10px;width:20px;height:20px;background:#ef4444;color:#fff;border-radius:50%;font-size:11px;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:11;line-height:1}
+.we-img-wrap.selected .we-del{display:flex}
+.we-img-wrap .we-size-hint{position:absolute;bottom:-22px;left:0;font-size:.6rem;color:var(--tx3);white-space:nowrap;display:none;background:var(--bg);padding:1px 4px;border-radius:4px}
+.we-img-wrap.selected .we-size-hint{display:block}
 </style>
 </head>
 <body>
@@ -326,7 +358,7 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
   <nav class="ln">
     <div class="logo">
       <svg width="24" height="24" viewBox="0 0 26 26" fill="none"><rect width="26" height="26" rx="7" fill="#2563eb"/><path d="M7 6h8l4 4v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z" fill="white" opacity=".92"/><path d="M15 6l4 4h-4V6z" fill="white" opacity=".5"/><path d="M9 14h8M9 17h5" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <span>Rúbrica</span>
+      <span>Rúbrica.PDF</span>
     </div>
     <button class="btn-o" style="padding:7px 16px;font-size:.82rem" onclick="enterApp()">Abrir editor →</button>
   </nav>
@@ -340,6 +372,7 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
         Abrir PDF
         <input type="file" id="lfi" accept="application/pdf,.pdf">
       </label>
+      <button class="btn-o" onclick="enterApp();setTimeout(openNewDoc,300)">Crear documento</button>
       <button class="btn-o" onclick="enterApp()">Ver la app</button>
     </div>
     <p class="lhint">Funciona en móvil y escritorio · Instala como app (PWA)</p>
@@ -351,9 +384,10 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
     <div class="lf"><div class="lfi" style="background:rgba(217,119,6,.08);color:#d97706"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><h3>Privacidad total</h3><p>Ningún archivo sale de tu dispositivo. Cero servidores.</p></div>
     <div class="lf"><div class="lfi" style="background:rgba(239,68,68,.08);color:#ef4444"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><h3>Exportar</h3><p>Descarga el PDF firmado o compártelo directamente.</p></div>
     <div class="lf"><div class="lfi" style="background:rgba(14,165,233,.08);color:#0ea5e9"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/></svg></div><h3>Combinar PDFs</h3><p>Une múltiples archivos en uno solo.</p></div>
+    <div class="lf" style="cursor:pointer" onclick="enterApp();setTimeout(openNewDoc,300)"><div class="lfi" style="background:rgba(234,179,8,.08);color:#ca8a04"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><h3>Crear documento</h3><p>Redacta desde cero con el editor tipo Word y expórtalo como PDF.</p></div>
   </div>
   <footer class="lfooter">
-    <p>© 2026 Rúbrica — Todos los derechos reservados</p>
+    <p>© 2026 Rúbrica.PDF — Todos los derechos reservados</p>
     <p style="margin-bottom:14px">
       <a href="#" onclick="openPrivacy();return false" style="color:var(--acc);font-size:.76rem;text-decoration:none">Política de Privacidad</a>
       &nbsp;·&nbsp;
@@ -369,7 +403,7 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
   <div id="topbar">
     <div class="tlogo" onclick="goLanding()" title="Ver presentación" style="cursor:pointer">
       <svg width="20" height="20" viewBox="0 0 26 26" fill="none"><rect width="26" height="26" rx="7" fill="#2563eb"/><path d="M7 6h8l4 4v10a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z" fill="white" opacity=".92"/><path d="M15 6l4 4h-4V6z" fill="white" opacity=".5"/><path d="M9 14h8M9 17h5" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <span>Rúbrica</span>
+      <span>Rúbrica.PDF</span>
     </div>
     <button class="tbtn" onclick="openNewDoc()" title="Nuevo documento">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -377,7 +411,7 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
     </button>
     <label class="tbtn" title="Abrir PDF">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      <span>Abrir PDF</span>
+      <span>Abrir</span>
       <input type="file" id="fi" accept="application/pdf,.pdf">
     </label>
     <button class="tbtn acc" id="savebtn" style="display:none" onclick="openSaveModal()">
@@ -385,19 +419,45 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
       <span>Guardar</span>
     </button>
     <div id="ssep" style="display:none"></div>
-    <button class="tbtn" onclick="openScanner()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span>Escanear</span>
-    </button>
+
     <div class="tsp"></div>
-    <button class="tbtn" onclick="openPrivacy()" title="Política de privacidad" style="font-size:.65rem">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    <button class="tbtn" id="menubtn" onclick="toggleTopMenu()" title="Más opciones">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
     </button>
-    <button class="tbtn" id="thmbtn" onclick="toggleDark()">
-      <svg id="thmic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+  </div>
+
+  <!-- Menú desplegable ⋮ -->
+  <div id="topmenu">
+    <button class="tmitem" onclick="weInsertImgToPDF();closeTopMenu()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      Insertar imagen
     </button>
-    <button class="tbtn" onclick="openProModal()" style="color:var(--ylw);border-color:rgba(217,119,6,.3)">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+    <button class="tmitem" onclick="openQR();closeTopMenu()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3"/></svg>
+      Crear código QR
+    </button>
+    <button class="tmitem" onclick="openScanner();closeTopMenu()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Escanear documento
+    </button>
+    <div class="tmsep"></div>
+    <button class="tmitem" onclick="openProModal();closeTopMenu()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="color:var(--ylw)"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>
+      <span style="color:var(--ylw)">Rúbrica.PDF Pro</span>
+    </button>
+    <div class="tmsep"></div>
+    <button class="tmitem" id="thmbtn" onclick="toggleDark();closeTopMenu()">
+      <svg id="thmic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      Modo oscuro
+    </button>
+    <button class="tmitem" onclick="openPrivacy();closeTopMenu()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Política de privacidad
+    </button>
+    <div class="tmsep"></div>
+    <button class="tmitem" onclick="goLanding();closeTopMenu()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Acerca de Rúbrica.PDF
     </button>
   </div>
 
@@ -410,6 +470,7 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
       <button class="tbut" id="t-hi" onclick="setTool('hi')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="7" rx="2"/></svg>RESALTAR</button>
       <button class="tbut" id="t-text" onclick="setTool('text')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="12" y1="4" x2="12" y2="20"/></svg>TEXTO</button>
       <button class="tbut" onclick="openSigModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-3 5-6 5-8a2 2 0 0 0-4 0c0 2.7 2.7 5.3 8 8 2.7 1.3 5 2 7 2a3 3 0 0 0 0-6c-2 0-4 .7-6 2"/></svg>FIRMA</button>
+      <button class="tbut" id="t-censor" onclick="setTool('censor')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="1" fill="currentColor" stroke="none"/><line x1="3" y1="5" x2="21" y2="5" stroke-width="1.5"/><line x1="3" y1="19" x2="21" y2="19" stroke-width="1.5"/></svg>CENSURAR</button>
       <div class="tsep"></div>
       <div id="crow" style="display:flex;gap:5px;align-items:center;flex-shrink:0">
         <div class="cdot on" style="background:#1a1aff" data-c="#1a1aff" onclick="setColor(this)"></div>
@@ -441,7 +502,7 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
     <div id="main">
       <div id="dz">
         <div class="dzic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
-        <p class="dztit">Rúbrica</p>
+        <p class="dztit">Rúbrica.PDF</p>
         <p class="dzsub">Firma, anota y escanea documentos PDF</p>
         <div class="dzact">
           <label class="dzbtn">
@@ -460,7 +521,7 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
         <canvas id="pc"></canvas>
         <canvas id="ac"></canvas>
         <canvas id="xc"></canvas>
-        <div id="selbox"><div id="selbody"></div><div class="sdl tl" id="sh-tl"></div><div class="sdl tr" id="sh-tr"></div><div class="sdl bl" id="sh-bl"></div><div class="sdl br" id="sh-br"></div><div id="seldel">✕</div><button id="selok" onclick="hideSel();toast('Fijado ✓','ok')">✓ Fijar</button></div>
+        <div id="selbox"><div id="selbody"></div><div class="sdl tl" id="sh-tl"></div><div class="sdl tr" id="sh-tr"></div><div class="sdl bl" id="sh-bl"></div><div class="sdl br" id="sh-br"></div><div id="seldel">✕</div><button id="selok" onclick="censorApply()">✓ Fijar</button></div>
       </div>
     </div>
   </div><!-- /rc -->
@@ -483,6 +544,7 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
   <button class="dbtn" id="d-draw" onclick="setTool('draw')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/></svg></button>
   <button class="dbtn" id="d-hi" onclick="setTool('hi')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="9" width="18" height="7" rx="2"/></svg></button>
   <button class="dbtn" id="d-text" onclick="setTool('text')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="12" y1="4" x2="12" y2="20"/></svg></button>
+  <button class="dbtn" id="d-censor" onclick="setTool('censor')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="1" fill="currentColor" stroke="none"/></svg></button>
   <div class="dsep"></div>
   <button class="dbtn" style="color:var(--ylw)" onclick="openSigModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c3-3 5-6 5-8a2 2 0 0 0-4 0c0 2.7 2.7 5.3 8 8 2.7 1.3 5 2 7 2a3 3 0 0 0 0-6c-2 0-4 .7-6 2"/></svg></button>
   <div class="dsep"></div>
@@ -719,22 +781,12 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
   <div class="sheet">
     <div class="shdl"></div>
     <div class="probadge">★</div>
-    <p class="protit">Rúbrica Pro</p>
+    <p class="protit">Rúbrica.PDF Pro</p>
     <p class="prosub" id="promsg">Versión gratuita. Para uso ilimitado descarga la app.</p>
     <div style="padding:0 14px 10px;display:flex;flex-direction:column;gap:7px">
       <!-- Sin compra en versión web -->
       <button class="shb" onclick="watchAd()">Ver anuncio (+3 usos gratis)</button>
-      <a class="shb" href="https://play.google.com/store/apps/details?id=com.rubrica.app" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;color:var(--grn);border-color:rgba(5,150,105,.3)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5v-17c0-.83 1-.83 1.5-.5l15 8.5-15 8.5c-.5.33-1.5.33-1.5-.5z"/></svg>Descargar app en Play Store</a>
-      <div style="display:flex;flex-direction:column;gap:5px;padding:8px 0 0">
-        <p style="font-size:.73rem;color:var(--tx2);font-weight:600">¿Ya tienes un código de activación?</p>
-        <div style="display:flex;gap:6px">
-          <input id="procode" type="text" placeholder="RUBRICA-XXXX-XXXX"
-            style="flex:1;padding:9px 11px;border-radius:8px;border:1.5px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'JetBrains Mono',monospace;font-size:.8rem;outline:none;text-transform:uppercase"
-            oninput="this.value=this.value.toUpperCase()">
-          <button class="shb p" style="flex:0 0 auto;padding:0 14px" onclick="activateCode()">Activar</button>
-        </div>
-        <p id="codemsg" style="font-size:.7rem;color:var(--tx3);min-height:14px"></p>
-      </div>
+
       <button class="shb" onclick="closePro()">Ahora no</button>
     </div>
   </div>
@@ -753,11 +805,11 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
     <p class="lastupd">Última actualización: 10 de March de 2026</p>
 
     <h3>1. Quiénes somos</h3>
-    <p><strong>Rúbrica</strong> es una aplicación web progresiva (PWA) de firma y anotación de documentos PDF. Desarrollada de forma independiente.</p>
+    <p><strong>Rúbrica.PDF</strong> es una aplicación web progresiva (PWA) de firma y anotación de documentos PDF. Desarrollada de forma independiente.</p>
     <p>Contacto: <a href="mailto:tu@email.com" style="color:var(--acc)">tu@email.com</a></p>
 
     <h3>2. Datos que NO recopilamos</h3>
-    <p>Rúbrica está diseñada con privacidad total. <strong>Ningún documento, firma ni anotación sale de tu dispositivo.</strong> No tenemos servidores que almacenen tus archivos.</p>
+    <p>Rúbrica.PDF está diseñada con privacidad total. <strong>Ningún documento, firma ni anotación sale de tu dispositivo.</strong> No tenemos servidores que almacenen tus archivos.</p>
     <ul>
       <li>No recopilamos documentos PDF</li>
       <li>No almacenamos firmas ni anotaciones</li>
@@ -777,7 +829,7 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
 
     <h3>4. Publicidad</h3>
     <p>La versión gratuita puede mostrar anuncios de Google AdSense. Google puede usar cookies para mostrar anuncios relevantes según tu actividad de navegación. Puedes gestionar tus preferencias en <a href="https://adssettings.google.com" target="_blank" style="color:var(--acc)">adssettings.google.com</a>.</p>
-    <p>Los usuarios con licencia <strong>Rúbrica Pro</strong> no ven publicidad.</p>
+    <p>Los usuarios con licencia <strong>Rúbrica.PDF Pro</strong> no ven publicidad.</p>
 
     <h3>5. Permisos de la app</h3>
     <ul>
@@ -786,7 +838,7 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
     </ul>
 
     <h3>6. Menores de edad</h3>
-    <p>Rúbrica no está dirigida a menores de 13 años y no recopila conscientemente información de menores.</p>
+    <p>Rúbrica.PDF no está dirigida a menores de 13 años y no recopila conscientemente información de menores.</p>
 
     <h3>7. Cambios en esta política</h3>
     <p>Cualquier cambio se publicará en esta misma página con la fecha de actualización. El uso continuado de la app implica la aceptación de los cambios.</p>
@@ -795,8 +847,8 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
     <p>Para cualquier consulta sobre privacidad escríbenos a <a href="mailto:tu@email.com" style="color:var(--acc)">tu@email.com</a></p>
 
     <div style="margin-top:28px;padding-top:18px;border-top:1px solid var(--bd);text-align:center">
-      <p style="font-size:.7rem;color:var(--tx3)">© 2026 Rúbrica. Todos los derechos reservados.</p>
-      <p style="font-size:.7rem;color:var(--tx3)">Rúbrica es una marca registrada. Queda prohibida la reproducción total o parcial de esta aplicación sin autorización expresa.</p>
+      <p style="font-size:.7rem;color:var(--tx3)">© 2026 Rúbrica.PDF. Todos los derechos reservados.</p>
+      <p style="font-size:.7rem;color:var(--tx3)">Rúbrica.PDF es una marca registrada. Queda prohibida la reproducción total o parcial de esta aplicación sin autorización expresa.</p>
     </div>
   </div>
 </div>
@@ -816,6 +868,72 @@ label.dzbtn input[type=file]{position:absolute;inset:0;width:100%;height:100%;op
   </div>
   <button id="adclose" onclick="finishAd()">Obtener +3 usos →</button>
   <span id="adtimer2" style="font-size:.65rem;color:rgba(255,255,255,.35);font-family:'JetBrains Mono',monospace"></span>
+</div>
+
+
+<!-- Modal QR -->
+<div class="backdrop" id="qrmodal">
+  <div class="sheet" style="max-height:92vh;overflow-y:auto">
+    <div class="shdl"></div>
+    <div class="shh">
+      <span class="sht">Crear código QR</span>
+      <button class="shx" onclick="closeQR()">✕</button>
+    </div>
+
+    <!-- Preview QR -->
+    <div style="padding:14px 14px 8px;display:flex;justify-content:center">
+      <div id="qrpreview">
+        <span style="font-size:.7rem;color:var(--tx3)">Vista previa</span>
+      </div>
+    </div>
+
+    <!-- Tipo de contenido -->
+    <div class="qropt" style="margin-bottom:8px">
+      <label>Tipo de contenido</label>
+      <select id="qrtype" onchange="qrTypeChange()">
+        <option value="url">🔗 URL / Enlace web</option>
+        <option value="text">📝 Texto libre</option>
+        <option value="email">✉️ Email</option>
+        <option value="phone">📞 Teléfono</option>
+        <option value="wifi">📶 Wi-Fi</option>
+        <option value="vcard">👤 Contacto (vCard)</option>
+      </select>
+    </div>
+
+    <!-- Campos dinámicos según tipo -->
+    <div id="qrfields" class="qropt" style="gap:6px;margin-bottom:8px"></div>
+
+    <!-- Color y tamaño -->
+    <div class="qropt" style="flex-direction:row;gap:10px;align-items:center;margin-bottom:8px">
+      <div style="flex:1">
+        <label>Color QR</label>
+        <input type="color" id="qrcolor" value="#000000" oninput="qrGenerate()" style="height:34px;padding:2px 4px;cursor:pointer">
+      </div>
+      <div style="flex:1">
+        <label>Fondo</label>
+        <input type="color" id="qrbgcolor" value="#ffffff" oninput="qrGenerate()" style="height:34px;padding:2px 4px;cursor:pointer">
+      </div>
+    </div>
+
+    <!-- Tamaño en el PDF -->
+    <div class="qropt" style="margin-bottom:12px">
+      <label>Tamaño en el PDF</label>
+      <div class="qrsizetabs">
+        <div class="qrsizetab on" data-size="80" onclick="qrSetSize(this)">S<br><span style="font-size:.6rem;font-weight:400">2cm</span></div>
+        <div class="qrsizetab" data-size="120" onclick="qrSetSize(this)">M<br><span style="font-size:.6rem;font-weight:400">3cm</span></div>
+        <div class="qrsizetab" data-size="180" onclick="qrSetSize(this)">L<br><span style="font-size:.6rem;font-weight:400">5cm</span></div>
+        <div class="qrsizetab" data-size="250" onclick="qrSetSize(this)">XL<br><span style="font-size:.6rem;font-weight:400">7cm</span></div>
+      </div>
+    </div>
+
+    <div class="sha">
+      <button class="shb" onclick="closeQR()">Cancelar</button>
+      <button class="shb p" id="qrinsertbtn" onclick="qrInsert()" disabled>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM17 17h3v3h-3zM14 20h3"/></svg>
+        Insertar en PDF
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- Scanner -->
@@ -875,7 +993,7 @@ let isPro     = localStorage.getItem('rb_pro') === '1';
 // el nombre de paquete definitivo (ej: com.rubrica.app)
 // POR AHORA: desactivado para no dar Pro gratis a todos.
 (function() {
-  const PKG = '__PLAY_STORE_ONLY__'; // En web nunca se activa Pro automático
+ const PKG = '__PLAY_STORE_ONLY__'; // <-- cambia esto por tu paquete real de Play Store
   const isTWA = document.referrer === 'android-app://' + PKG + '/';
   if (isTWA && !localStorage.getItem('rb_pro')) {
     localStorage.setItem('rb_pro', '1');
@@ -898,6 +1016,7 @@ let placeTxt  = false;
 let txtOpts   = {text:'', font:'Arial', size:14, color:'#111'};
 let savedSigs = JSON.parse(localStorage.getItem('rb_sigs') || '[]');
 let drawing   = false, curPath = null;
+let cur       = null; // rectángulo de censura en progreso
 // Scanner
 let stream = null, flash = false, scanPages = [], curPhoto = null;
 let cpPts = [], cpImgW=0, cpImgH=0, cpDispW=0, cpDispH=0, cpOX=0, cpOY=0;
@@ -985,7 +1104,7 @@ function openProModal(r) {
   }
   $('promsg').textContent = r==='limit'
     ? `Has usado tus ${FREE} usos gratuitos.`
-    : 'Desbloquea Rúbrica Pro por un único pago.';
+    : 'Desbloquea Rúbrica.PDF Pro por un único pago.';
   $('promodal').classList.add('on');
 }
 function closePro()  { $('promodal').classList.remove('on'); }
@@ -1008,39 +1127,13 @@ const VALID_CODES = [
   // Añade más códigos aquí cuando los vendas
 ];
 
-function activateCode() {
-  const code = $('procode').value.trim().toUpperCase();
-  const msg  = $('codemsg');
-  if (!code) { msg.style.color='var(--red)'; msg.textContent='Introduce un código.'; return; }
-
-  // Comprobar si ya fue usado en este dispositivo
-  const usedCodes = JSON.parse(localStorage.getItem('rb_used_codes') || '[]');
-  if (usedCodes.includes(code)) {
-    msg.style.color='var(--red)';
-    msg.textContent='Este código ya fue usado en este dispositivo.';
-    return;
-  }
-
-  if (VALID_CODES.includes(code)) {
-    // Marcar como usado
-    usedCodes.push(code);
-    localStorage.setItem('rb_used_codes', JSON.stringify(usedCodes));
-    localStorage.setItem('rb_pro', '1');
-    localStorage.setItem('rb_pro_code', code);
-    isPro = true;
-    closePro(); applyPro();
-    toast('¡Rúbrica Pro activado! ✓', 'ok');
-  } else {
-    msg.style.color='var(--red)';
-    msg.textContent='Código no válido. Comprueba mayúsculas y guiones.';
-  }
-}
+// activateCode eliminado en versión web
 
 function buyPro() {
   // Aquí irá el enlace a tu pasarela de pago (Stripe, PayPal, etc.)
   // Por ahora abre un mailto para contacto directo
-  const subject = encodeURIComponent('Compra Rúbrica Pro');
-  const body    = encodeURIComponent('Hola, quiero comprar Rúbrica Pro (3,99 €).\n\nDispositivo: ' + navigator.userAgent);
+  const subject = encodeURIComponent('Compra Rúbrica.PDF Pro');
+  const body    = encodeURIComponent('Hola, quiero comprar Rúbrica.PDF Pro (3,99 €).\n\nDispositivo: ' + navigator.userAgent);
   window.open('mailto:tu@email.com?subject=' + subject + '&body=' + body);
   $('codemsg').style.color='var(--tx2)';
   $('codemsg').textContent='Te enviaremos el código por email en menos de 24h.';
@@ -1163,6 +1256,9 @@ function doZoom(d) {
 
 // ── TOOLS ─────────────────────────────────────────────────────────────────
 function setTool(t) {
+  // Mostrar tooltip de ayuda al activar censura
+  if (t==='censor') toast('Arrastra para pixelar un área','ok');
+  if (t!=='censor') { cur=null; if(xctx) xctx.clearRect(0,0,xcv.width,xcv.height); }
   tool=t;
   ['cursor','draw','hi','text'].forEach(id=>{
     const tb=$('t-'+id), db=$('d-'+id);
@@ -1210,6 +1306,10 @@ function down(e) {
   if (placeSig) { placeSig=false; return; }
   if (placeTxt) return; // handled in up()
 
+  if (tool==='censor') {
+    cur = {type:'censor', page:curPage, x:p.x, y:p.y, w:0, h:0};
+    return;
+  }
   if (tool==='draw' || tool==='hi') {
     drawing = true;
     curPath = {
@@ -1223,6 +1323,29 @@ function down(e) {
 }
 
 function move(e) {
+  // ── Preview censura en tiempo real ────────────────────────
+  if (tool==='censor' && cur) {
+    const p = xy(e);
+    cur.w = p.x - cur.x;
+    cur.h = p.y - cur.y;
+    // Dibujar preview encima del canvas de anotaciones
+    xctx.clearRect(0,0,xcv.width,xcv.height);
+    xctx.save();
+    xctx.setTransform(PR,0,0,PR,0,0);
+    const px = cur.w<0 ? cur.x+cur.w : cur.x;
+    const py = cur.h<0 ? cur.y+cur.h : cur.y;
+    const pw = Math.abs(cur.w), ph = Math.abs(cur.h);
+    // Fondo negro semitransparente como preview
+    xctx.fillStyle = 'rgba(0,0,0,0.6)';
+    xctx.fillRect(px, py, pw, ph);
+    // Borde punteado para indicar que es selección
+    xctx.strokeStyle = '#fff';
+    xctx.lineWidth = 1.5;
+    xctx.setLineDash([4,3]);
+    xctx.strokeRect(px, py, pw, ph);
+    xctx.restore();
+    return;
+  }
   if (!drawing || !curPath) return;
   const p = xy(e);
   curPath.pts.push({x:p.x, y:p.y});
@@ -1249,6 +1372,24 @@ function move(e) {
 }
 
 function up(e) {
+  // ── Confirmar censura ──────────────────────────────────────
+  if (tool==='censor' && cur) {
+    if (Math.abs(cur.w) > 5 && Math.abs(cur.h) > 5) {
+      const cx = cur.w < 0 ? cur.x + cur.w : cur.x;
+      const cy = cur.h < 0 ? cur.y + cur.h : cur.y;
+      paths.push({type:'censor', page:curPage, x:cx, y:cy, w:Math.abs(cur.w), h:Math.abs(cur.h)});
+      xctx.clearRect(0,0,xcv.width,xcv.height);
+      redraw();
+      // Activar selección igual que firma/texto — mover antes de fijar
+      selIdx = paths.length - 1;
+      showSel();
+      setTool('cursor');
+      toast('Mueve y redimensiona, luego ✓ Fijar','ok');
+    } else {
+      xctx.clearRect(0,0,xcv.width,xcv.height);
+    }
+    cur = null; return;
+  }
   if (placeTxt) {
     const p = xy(e);
     const t = txtOpts;
@@ -1297,6 +1438,37 @@ function redraw() {
       actx.beginPath();
       p.pts.forEach((pt,i)=>i===0?actx.moveTo(pt.x,pt.y):actx.lineTo(pt.x,pt.y));
       actx.stroke();
+    } else if (p.type==='censor') {
+      // Efecto pixelado — coge los pixels del PDF y los pixela
+      actx.save();
+      const pixSize = Math.max(8, Math.min(18, Math.min(p.w, p.h) / 6));
+      const x0 = Math.floor(p.x), y0 = Math.floor(p.y);
+      const w0 = Math.ceil(p.w),  h0 = Math.ceil(p.h);
+      // Leer pixels del canvas del PDF (pcv)
+      try {
+        const srcCtx = pcv.getContext('2d');
+        for (let bx = 0; bx < w0; bx += pixSize) {
+          for (let by = 0; by < h0; by += pixSize) {
+            const bw = Math.min(pixSize, w0 - bx);
+            const bh = Math.min(pixSize, h0 - by);
+            // Coger pixel central del bloque
+            const cx2 = Math.floor((x0 + bx + bw/2) * PR);
+            const cy2 = Math.floor((y0 + by + bh/2) * PR);
+            const px2 = srcCtx.getImageData(cx2, cy2, 1, 1).data;
+            // Pintar bloque con ese color
+            actx.fillStyle = `rgb(${px2[0]},${px2[1]},${px2[2]})`;
+            actx.fillRect(x0 + bx, y0 + by, bw, bh);
+          }
+        }
+        // Capa extra de blur visual con overlays semitransparentes
+        actx.fillStyle = 'rgba(128,128,128,0.25)';
+        actx.fillRect(p.x, p.y, p.w, p.h);
+      } catch(e2) {
+        // Fallback: negro sólido si no se puede leer el canvas
+        actx.fillStyle = '#111';
+        actx.fillRect(p.x, p.y, p.w, p.h);
+      }
+      actx.restore();
     } else if (p.type==='text') {
       actx.globalAlpha=1; actx.fillStyle=p.color;
       actx.font=`${p.size}px ${p.font}`;
@@ -1465,6 +1637,35 @@ function savePDF(share=false, docName='documento-firmado') {
           const tx=tmp.getContext('2d'); tx.setTransform(PR,0,0,PR,0,0);
           const draws=pp.map(p=>{
             tx.save();
+            if(p.type==='censor'){
+              tx.save();
+              // Mismas coordenadas que draw/text/sig — sin convertir por scale
+              const ex=p.x, ey=p.y, ew=p.w, eh=p.h;
+              const pixS=Math.max(6,Math.min(16,Math.min(ew,eh)/5));
+              try {
+                // Leer pixels del canvas principal (pcv) que tiene el PDF renderizado
+                const srcCtx=pcv.getContext('2d');
+                for(let bx=0;bx<ew;bx+=pixS){
+                  for(let by=0;by<eh;by+=pixS){
+                    const bw2=Math.min(pixS,ew-bx),bh2=Math.min(pixS,eh-by);
+                    // Centro del bloque en coordenadas del canvas pcv (con PR)
+                    const cxp=Math.floor((ex+bx+bw2/2)*PR);
+                    const cyp=Math.floor((ey+by+bh2/2)*PR);
+                    const pd=srcCtx.getImageData(cxp,cyp,1,1).data;
+                    tx.fillStyle=`rgb(${pd[0]},${pd[1]},${pd[2]})`;
+                    tx.fillRect(ex+bx,ey+by,bw2,bh2);
+                  }
+                }
+                // Capa gris para efecto pixelado más visible
+                tx.fillStyle='rgba(60,60,60,0.2)';
+                tx.fillRect(ex,ey,ew,eh);
+              } catch(e3){
+                // Fallback negro si falla la lectura de pixels
+                tx.fillStyle='#111111';
+                tx.fillRect(ex,ey,ew,eh);
+              }
+              tx.restore(); return Promise.resolve();
+            }
             if(p.type==='draw'){tx.strokeStyle=p.color;tx.lineWidth=p.width;tx.lineCap='round';tx.lineJoin='round';tx.beginPath();p.pts.forEach((pt,i)=>i===0?tx.moveTo(pt.x,pt.y):tx.lineTo(pt.x,pt.y));tx.stroke();tx.restore();return Promise.resolve();}
             if(p.type==='hi'){tx.globalAlpha=.35;tx.strokeStyle=p.color;tx.lineWidth=p.width;tx.lineCap='square';tx.lineJoin='square';tx.beginPath();p.pts.forEach((pt,i)=>i===0?tx.moveTo(pt.x,pt.y):tx.lineTo(pt.x,pt.y));tx.stroke();tx.restore();return Promise.resolve();}
             if(p.type==='text'){tx.fillStyle=p.color;tx.font=`${p.size}px ${p.font}`;tx.fillText(p.text,p.x,p.y);tx.restore();return Promise.resolve();}
@@ -1661,16 +1862,29 @@ function buildScanPDF(){
 
 // ── SELECCIÓN ────────────────────────────────────────────────────────────
 let selIdx = -1;
+
+function censorApply() {
+  if (selIdx >= 0 && selIdx < paths.length && paths[selIdx].type === 'censor') {
+    hideSel();
+    redraw();
+    toast('Censura aplicada ✓', 'ok');
+  } else {
+    hideSel();
+    toast('Fijado ✓', 'ok');
+  }
+}
+
 function itmBounds(it) {
   if (!it) return null;
-  if (it.type==='sig')  return {x:it.x,y:it.y,w:it.w,h:it.h};
-  if (it.type==='text') return {x:it.x,y:it.y-it.size,w:Math.max(it.size*it.text.length*.65,it.size*2),h:it.size*1.6};
+  if (it.type==='sig')    return {x:it.x,y:it.y,w:it.w,h:it.h};
+  if (it.type==='censor') return {x:it.x,y:it.y,w:it.w,h:it.h};
+  if (it.type==='text')   return {x:it.x,y:it.y-it.size,w:Math.max(it.size*it.text.length*.65,it.size*2),h:it.size*1.6};
   return null;
 }
 function hitItm(px,py) {
   for(let i=paths.length-1;i>=0;i--){
     const it=paths[i]; if(it.page!==curPage) continue;
-    if(it.type!=='text'&&it.type!=='sig') continue;
+    if(it.type!=='text'&&it.type!=='sig'&&it.type!=='censor') continue;
     const b=itmBounds(it);
     if(b&&px>=b.x-10&&px<=b.x+b.w+10&&py>=b.y-10&&py<=b.y+b.h+10) return i;
   }
@@ -1696,8 +1910,8 @@ function startSelDrag(e,mode) {
     if(ev.cancelable) ev.preventDefault();
     const c=getC(ev),dx=c.x-c0.x,dy=c.y-c0.y;
     if(mode==='move'){it.x=sn.x+dx;it.y=sn.y+dy;}
-    else if(it.type==='sig'){
-      if(mode==='br'){it.w=Math.max(40,sn.w+dx);it.h=Math.max(20,sn.h+dy);}
+    else if(it.type==='sig'||it.type==='censor'){
+      if(mode==='br'){it.w=Math.max(20,sn.w+dx);it.h=Math.max(10,sn.h+dy);}
       else if(mode==='bl'){const nw=Math.max(40,sn.w-dx);it.x=sn.x+(sn.w-nw);it.w=nw;it.h=Math.max(20,sn.h+dy);}
       else if(mode==='tr'){it.w=Math.max(40,sn.w+dx);const nh=Math.max(20,sn.h-dy);it.y=sn.y+(sn.h-nh);it.h=nh;}
       else if(mode==='tl'){const nw=Math.max(40,sn.w-dx);it.x=sn.x+(sn.w-nw);it.w=nw;const nh=Math.max(20,sn.h-dy);it.y=sn.y+(sn.h-nh);it.h=nh;}
@@ -1717,6 +1931,330 @@ $('selbody').addEventListener('touchstart',e=>{e.preventDefault();startSelDrag(e
   const el=$('sh-'+dir);
   el.addEventListener('mousedown',e=>{e.stopPropagation();startSelDrag(e,dir);});
   el.addEventListener('touchstart',e=>{e.stopPropagation();e.preventDefault();startSelDrag(e,dir);},{passive:false});
+});
+
+
+
+// ── CREADOR QR ────────────────────────────────────────────────
+let qrSize    = 80;
+let qrDataURL = null;
+
+const QR_FIELDS = {
+  url:   [{id:'qr_url',   label:'URL',      type:'url',      placeholder:'https://ejemplo.com'}],
+  text:  [{id:'qr_text',  label:'Texto',     type:'textarea', placeholder:'Escribe el texto del QR...'}],
+  email: [{id:'qr_email', label:'Email',     type:'email',    placeholder:'correo@ejemplo.com'},
+          {id:'qr_subj',  label:'Asunto',    type:'text',     placeholder:'Asunto del email'},
+          {id:'qr_body',  label:'Mensaje',   type:'textarea', placeholder:'Mensaje...'}],
+  phone: [{id:'qr_phone', label:'Teléfono',  type:'tel',      placeholder:'+34 600 000 000'}],
+  wifi:  [{id:'qr_ssid',  label:'Nombre red (SSID)', type:'text', placeholder:'MiWifi'},
+          {id:'qr_pass',  label:'Contraseña',        type:'text', placeholder:'contraseña'},
+          {id:'qr_enc',   label:'Cifrado',            type:'select', options:['WPA','WEP','nopass']}],
+  vcard: [{id:'qr_name',  label:'Nombre completo', type:'text',  placeholder:'Juan García'},
+          {id:'qr_org',   label:'Empresa',         type:'text',  placeholder:'Mi Empresa'},
+          {id:'qr_vphone',label:'Teléfono',         type:'tel',   placeholder:'+34 600 000 000'},
+          {id:'qr_vemail',label:'Email',            type:'email', placeholder:'juan@empresa.com'},
+          {id:'qr_web',   label:'Web',              type:'url',   placeholder:'https://empresa.com'}],
+};
+
+function openQR() {
+  if (!pdfDoc) { toast('Abre un PDF primero','err'); return; }
+  $('qrmodal').classList.add('on');
+  qrTypeChange();
+}
+function closeQR() { $('qrmodal').classList.remove('on'); }
+
+function qrTypeChange() {
+  const type = $('qrtype').value;
+  const fields = QR_FIELDS[type] || [];
+  const container = $('qrfields');
+  container.innerHTML = '';
+  fields.forEach(f => {
+    const label = document.createElement('label');
+    label.textContent = f.label;
+    container.appendChild(label);
+    let el;
+    if (f.type === 'textarea') {
+      el = document.createElement('textarea');
+      el.placeholder = f.placeholder || '';
+    } else if (f.type === 'select') {
+      el = document.createElement('select');
+      el.style.cssText = 'padding:8px 11px;border-radius:8px;border:1.5px solid var(--bd);background:var(--s2);color:var(--tx);font-size:.82rem;outline:none;width:100%';
+      (f.options||[]).forEach(opt => { const o=document.createElement('option'); o.value=o.textContent=opt; el.appendChild(o); });
+    } else {
+      el = document.createElement('input');
+      el.type = f.type;
+      el.placeholder = f.placeholder || '';
+    }
+    el.id = f.id;
+    el.addEventListener('input', qrGenerate);
+    container.appendChild(el);
+  });
+  qrGenerate();
+}
+
+function qrBuildContent() {
+  const type = $('qrtype').value;
+  const g = id => { const el=$(id); return el ? el.value.trim() : ''; };
+  switch(type) {
+    case 'url':   return g('qr_url') || null;
+    case 'text':  return g('qr_text') || null;
+    case 'phone': return g('qr_phone') ? 'tel:' + g('qr_phone') : null;
+    case 'email': {
+      const em=g('qr_email'); if(!em) return null;
+      let s='mailto:'+em;
+      if(g('qr_subj')) s+='?subject='+encodeURIComponent(g('qr_subj'));
+      if(g('qr_body')) s+=(s.includes('?')?'&':'?')+'body='+encodeURIComponent(g('qr_body'));
+      return s;
+    }
+    case 'wifi': {
+      const ssid=g('qr_ssid'); if(!ssid) return null;
+      const enc=$('qr_enc')?$('qr_enc').value:'WPA';
+      return `WIFI:T:${enc};S:${ssid};P:${g('qr_pass')};;`;
+    }
+    case 'vcard': {
+      const name=g('qr_name'); if(!name) return null;
+      return `BEGIN:VCARD
+VERSION:3.0
+FN:${name}
+ORG:${g('qr_org')}
+TEL:${g('qr_vphone')}
+EMAIL:${g('qr_vemail')}
+URL:${g('qr_web')}
+END:VCARD`;
+    }
+  }
+  return null;
+}
+
+// ── Generador QR puro en canvas (sin librería externa) ───────
+// Implementación simplificada QR versión 2 (hasta ~65 chars) con corrección L
+function qrGenerate() {
+  const content = qrBuildContent();
+  const btn = $('qrinsertbtn');
+  const preview = $('qrpreview');
+  if (!content) {
+    preview.innerHTML = '<span style="font-size:.7rem;color:var(--tx3)">Rellena los datos</span>';
+    btn.disabled = true; qrDataURL = null; return;
+  }
+  preview.innerHTML = '';
+  try {
+    const dark  = $('qrcolor').value   || '#000000';
+    const light = $('qrbgcolor').value || '#ffffff';
+    const cv2   = document.createElement('canvas');
+    cv2.width = cv2.height = 180;
+    const ctx2 = cv2.getContext('2d');
+    // Generar matriz QR usando qrcode-generator (inyectado inline)
+    const qr = qrcode(0, 'M');
+    qr.addData(content);
+    qr.make();
+    const count  = qr.getModuleCount();
+    const cell   = 180 / count;
+    ctx2.fillStyle = light;
+    ctx2.fillRect(0,0,180,180);
+    ctx2.fillStyle = dark;
+    for(let r=0;r<count;r++){
+      for(let c=0;c<count;c++){
+        if(qr.isDark(r,c)){
+          ctx2.fillRect(Math.floor(c*cell), Math.floor(r*cell),
+                        Math.ceil(cell), Math.ceil(cell));
+        }
+      }
+    }
+    qrDataURL = cv2.toDataURL('image/png');
+    preview.appendChild(cv2);
+    btn.disabled = false;
+  } catch(e) {
+    // Fallback visual si falla
+    preview.innerHTML = '<span style="font-size:.7rem;color:var(--red)">Texto demasiado largo para QR</span>';
+    btn.disabled = true; qrDataURL = null;
+    console.error('QR error:', e);
+  }
+}
+
+function qrSetSize(el) {
+  document.querySelectorAll('.qrsizetab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  qrSize = parseInt(el.dataset.size);
+}
+
+function qrInsert() {
+  if (!qrDataURL) { toast('Genera el QR primero','err'); return; }
+  const cx = pcv.clientWidth/2, cy = pcv.clientHeight/2;
+  paths.push({
+    type: 'sig', page: curPage,
+    x: cx - qrSize/2, y: cy - qrSize/2,
+    w: qrSize, h: qrSize,
+    data: qrDataURL
+  });
+  redraw();
+  selIdx = paths.length - 1;
+  showSel();
+  setTool('cursor');
+  closeQR();
+  toast('QR insertado — muévelo y fíjalo ✓','ok');
+}
+
+
+// ── IMÁGENES FLOTANTES EN EDITOR WORD ────────────────────────
+let weSelImg = null; // imagen seleccionada actualmente
+
+function weInsertImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const pg = $('wepage');
+    const wrap = document.createElement('div');
+    wrap.className = 'we-img-wrap';
+    // Posición inicial: esquina superior derecha del documento
+    wrap.style.cssText = 'left:0px;top:0px;width:120px;height:120px;';
+
+    const img = document.createElement('img');
+    img.src = e.target.result;
+    img.draggable = false;
+
+    const resizeHandle = document.createElement('div');
+    resizeHandle.className = 'we-resize';
+
+    const delBtn = document.createElement('div');
+    delBtn.className = 'we-del';
+    delBtn.textContent = '✕';
+    delBtn.addEventListener('click', ev => { ev.stopPropagation(); wrap.remove(); weSelImg=null; });
+
+    const hint = document.createElement('div');
+    hint.className = 'we-size-hint';
+
+    wrap.appendChild(img);
+    wrap.appendChild(resizeHandle);
+    wrap.appendChild(delBtn);
+    wrap.appendChild(hint);
+    pg.appendChild(wrap);
+
+    // Seleccionar al insertar
+    weSelectImg(wrap);
+    weInitImgDrag(wrap, resizeHandle, hint);
+
+    // Ajustar tamaño inicial proporcional al cargar
+    img.onload = () => {
+      const ratio = img.naturalHeight / img.naturalWidth;
+      const w = Math.min(150, pg.clientWidth * 0.3);
+      wrap.style.width  = w + 'px';
+      wrap.style.height = (w * ratio) + 'px';
+      weUpdateHint(wrap, hint);
+    };
+    toast('Imagen insertada — arrastra para moverla','ok');
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function weSelectImg(wrap) {
+  // Deseleccionar anterior
+  document.querySelectorAll('.we-img-wrap.selected').forEach(w => w.classList.remove('selected'));
+  wrap.classList.add('selected');
+  weSelImg = wrap;
+}
+
+function weUpdateHint(wrap, hint) {
+  const pw = parseFloat(wrap.style.width)  || 0;
+  const ph = parseFloat(wrap.style.height) || 0;
+  // Convertir px a cm (96px = 1in = 2.54cm)
+  const wcm = (pw / 96 * 2.54).toFixed(1);
+  const hcm = (ph / 96 * 2.54).toFixed(1);
+  hint.textContent = wcm + 'cm × ' + hcm + 'cm';
+}
+
+function weInitImgDrag(wrap, resizeHandle, hint) {
+  // ── Mover ────────────────────────────────────────────────
+  wrap.addEventListener('pointerdown', e => {
+    if (e.target === resizeHandle || e.target.classList.contains('we-del')) return;
+    weSelectImg(wrap);
+    e.preventDefault();
+    const startX = e.clientX, startY = e.clientY;
+    const startL = parseFloat(wrap.style.left) || 0;
+    const startT = parseFloat(wrap.style.top)  || 0;
+    const pg = $('wepage');
+
+    function onMove(ev) {
+      const dx = ev.clientX - startX, dy = ev.clientY - startY;
+      const maxL = pg.offsetWidth  - wrap.offsetWidth;
+      const maxT = pg.offsetHeight - wrap.offsetHeight;
+      wrap.style.left = Math.max(0, Math.min(maxL, startL + dx)) + 'px';
+      wrap.style.top  = Math.max(0, Math.min(maxT, startT + dy)) + 'px';
+    }
+    function onUp() {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  });
+
+  // ── Redimensionar ────────────────────────────────────────
+  resizeHandle.addEventListener('pointerdown', e => {
+    e.stopPropagation(); e.preventDefault();
+    const startX = e.clientX, startY = e.clientY;
+    const startW = parseFloat(wrap.style.width)  || 80;
+    const startH = parseFloat(wrap.style.height) || 80;
+    const ratio  = startH / startW;
+
+    function onMove(ev) {
+      const dx = ev.clientX - startX;
+      const w  = Math.max(40, startW + dx);
+      wrap.style.width  = w + 'px';
+      wrap.style.height = (w * ratio) + 'px'; // mantener proporción
+      weUpdateHint(wrap, hint);
+    }
+    function onUp() {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+  });
+}
+
+// Deseleccionar al pulsar fuera de una imagen
+$('wepage').addEventListener('click', e => {
+  if (!e.target.closest('.we-img-wrap')) {
+    document.querySelectorAll('.we-img-wrap.selected').forEach(w => w.classList.remove('selected'));
+    weSelImg = null;
+  }
+});
+
+
+// ── INSERTAR IMAGEN EN PDF ────────────────────────────────────
+function weInsertImgToPDF() {
+  if (!pdfDoc) { toast('Abre un PDF primero','err'); return; }
+  var inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = function() {
+    var file = inp.files[0]; if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var cx = pcv.clientWidth/2, cy = pcv.clientHeight/2;
+      var sz = Math.min(pcv.clientWidth * 0.4, 200);
+      paths.push({type:'sig', page:curPage, x:cx-sz/2, y:cy-sz/2, w:sz, h:sz, data:e.target.result});
+      redraw(); selIdx=paths.length-1; showSel(); setTool('cursor');
+      toast('Imagen insertada — muévela y fíjala ✓','ok');
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+// ── MENÚ ⋮ ───────────────────────────────────────────────────
+function toggleTopMenu() {
+  $('topmenu').classList.toggle('on');
+}
+function closeTopMenu() {
+  $('topmenu').classList.remove('on');
+}
+// Cerrar al tocar fuera
+document.addEventListener('click', e => {
+  if (!$('topmenu').contains(e.target) && e.target !== $('menubtn')) {
+    closeTopMenu();
+  }
 });
 
 // ── POLÍTICA DE PRIVACIDAD ────────────────────────────────────
@@ -1777,215 +2315,151 @@ function weUpdateCount() {
 }
 
 function weConvertToPDF() {
-  const pg = $('wepage');
+  const pg   = $('wepage');
   const html = pg.innerHTML;
-  if (!html.trim() || html === '<p><br></p>') {
+  if (!html.trim() || pg.innerText.trim() === '') {
     toast('El documento está vacío','err'); return;
   }
 
-  loading(true, 'Convirtiendo a PDF...');
-  closeWordEditor();
+  // Clonar HTML ANTES de tocar el DOM
+  const htmlCopy = html;
 
-  // Usar pdf-lib para crear PDF con el contenido del editor
-  // Procesamos el HTML del contenteditable en bloques de texto
-  PDFLib.PDFDocument.create().then(async doc => {
-    const { rgb, StandardFonts } = PDFLib;
-    const W = 595, H = 842, ML = 56, MR = 56, MT = 60, MB = 56;
-    const maxW = W - ML - MR;
 
-    let page = doc.addPage([W, H]);
-    let yPos = H - MT;
+  loading(true, 'Generando PDF...');
 
-    const fReg  = await doc.embedFont(StandardFonts.Helvetica);
-    const fBold = await doc.embedFont(StandardFonts.HelveticaBold);
-    const fIta  = await doc.embedFont(StandardFonts.HelveticaOblique);
-    const fBoldIta = await doc.embedFont(StandardFonts.HelveticaBoldOblique);
+  // Usar async IIFE para manejar errores correctamente
+  (async function() {
+    try {
+      var PDFDocument = PDFLib.PDFDocument;
+      var rgb = PDFLib.rgb;
+      var StandardFonts = PDFLib.StandardFonts;
 
-    // Parsear el HTML del editor en líneas con formato
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html;
+      var doc = await PDFDocument.create();
+      var W=595, H=842, ML=85, MR=85, MT=71, MB=71;
+      var maxW = W - ML - MR;
+      var page = doc.addPage([W, H]);
+      var yPos = H - MT;
 
-    function hexToRgb(hex) {
-      hex = hex.replace('#','');
-      if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
-      const n = parseInt(hex, 16);
-      return rgb(((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255);
-    }
+      var fReg     = await doc.embedFont(StandardFonts.Helvetica);
+      var fBold    = await doc.embedFont(StandardFonts.HelveticaBold);
+      var fIta     = await doc.embedFont(StandardFonts.HelveticaOblique);
+      var fBoldIta = await doc.embedFont(StandardFonts.HelveticaBoldOblique);
 
-    function getFontSize(el) {
-      // execCommand fontSize usa 1-7
-      const s = el.style && el.style.fontSize;
-      if (s) {
-        const n = parseFloat(s);
-        if (s.includes('pt')) return n;
-        if (s.includes('px')) return n * 0.75;
-        return n;
+      function hexToRgb(hex) {
+        hex = hex.replace('#','');
+        if (hex.length===3) hex=hex.split('').map(function(c){return c+c;}).join('');
+        var n=parseInt(hex,16);
+        return rgb(((n>>16)&255)/255,((n>>8)&255)/255,(n&255)/255);
       }
-      const sz = el.getAttribute && el.getAttribute('size');
-      if (sz) return [8,10,12,14,18,24,36][parseInt(sz)-1] || 12;
-      return null;
-    }
-
-    function getColor(el) {
-      const c = el.style && el.style.color;
-      if (c && c.startsWith('#')) return hexToRgb(c);
-      if (c && c.startsWith('rgb')) {
-        const m = c.match(/rgb\((\d+),(\d+),(\d+)\)/);
-        if (m) return rgb(+m[1]/255, +m[2]/255, +m[3]/255);
+      function getFontSize(el) {
+        var s = el.style && el.style.fontSize;
+        if (s) { var n=parseFloat(s); if(s.includes('pt'))return n; if(s.includes('px'))return n*.75; return n; }
+        var sz = el.getAttribute && el.getAttribute('size');
+        if (sz) return [8,10,12,14,18,24,36][parseInt(sz)-1]||12;
+        return null;
       }
-      return null;
-    }
-
-    // Extraer bloques: cada <p>, <div>, <h1-h6>, <li>
-    function getBlocks(container) {
-      const blocks = [];
-      const blockTags = new Set(['P','DIV','H1','H2','H3','H4','H5','H6','LI','BR','BLOCKQUOTE']);
-      function walk(node, fmt) {
-        if (node.nodeType === 3) {
-          // texto
-          const txt = node.textContent;
-          if (txt) blocks[blocks.length-1]?.spans.push({text:txt, ...fmt});
-          return;
-        }
-        const tag = node.tagName;
-        if (!tag) return;
-        // Nuevo bloque
-        if (blockTags.has(tag) && blocks.length > 0 || tag === 'BR') {
-          blocks.push({spans:[], align:'left', size:12, isHeading:false, isList:false});
-        }
-        if (!blocks.length) blocks.push({spans:[], align:'left', size:12});
-
-        // Heredar formato
-        let f = {...fmt};
-        if (tag === 'B' || tag === 'STRONG') f.bold = true;
-        if (tag === 'I' || tag === 'EM')     f.italic = true;
-        if (tag === 'U')                      f.underline = true;
-        if (tag === 'S' || tag === 'STRIKE')  f.strike = true;
-        if (['H1','H2','H3'].includes(tag))   { f.bold = true; f.size = tag==='H1'?22:tag==='H2'?18:14; }
-        if (tag === 'LI') { blocks[blocks.length-1].isList = true; blocks[blocks.length-1].bullet = '• '; }
-
-        const sz = getFontSize(node);
-        if (sz) f.size = sz;
-        const col = getColor(node);
-        if (col) f.color = col;
-
-        // Alineación
-        const ta = node.style && node.style.textAlign;
-        if (ta) blocks[blocks.length-1].align = ta;
-
-        node.childNodes.forEach(ch => walk(ch, f));
-
-        if (blockTags.has(tag)) {
-          blocks.push({spans:[], align:'left', size:12});
-        }
+      function getColor(el) {
+        var c = el.style && el.style.color;
+        if (c && c.startsWith('#')) return hexToRgb(c);
+        if (c && c.startsWith('rgb')) { var m=c.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/); if(m) return rgb(+m[1]/255,+m[2]/255,+m[3]/255); }
+        return null;
       }
-      blocks.push({spans:[], align:'left', size:12});
-      container.childNodes.forEach(ch => walk(ch, {bold:false, italic:false, underline:false, size:12, color:rgb(0.07,0.07,0.07)}));
-      return blocks.filter(b => b.spans.length > 0 || b.isList);
-    }
-
-    function chooseFont(bold, italic) {
-      if (bold && italic) return fBoldIta;
-      if (bold)           return fBold;
-      if (italic)         return fIta;
-      return fReg;
-    }
-
-    function addPage() {
-      page = doc.addPage([W, H]);
-      yPos = H - MT;
-      return page;
-    }
-
-    function drawLine(spans, size, align, bullet) {
-      if (yPos < MB + size + 4) addPage();
-
-      // Calcular texto completo para alineación
-      let totalW = 0;
-      const rendered = spans.map(sp => {
-        const f = chooseFont(sp.bold, sp.italic);
-        const w = f.widthOfTextAtSize(sp.text, size);
-        totalW += w;
-        return {f, w, sp};
-      });
-
-      let xOff = ML;
-      if (bullet) {
-        page.drawText(bullet, {x:ML, y:yPos, size, font:fReg, color:rgb(0.3,0.3,0.3)});
-        xOff = ML + fReg.widthOfTextAtSize(bullet, size) + 2;
-        totalW += xOff - ML;
+      function chooseFont(bold,italic) {
+        if(bold&&italic)return fBoldIta; if(bold)return fBold; if(italic)return fIta; return fReg;
       }
-
-      if (align === 'center') xOff = (W - totalW) / 2;
-      else if (align === 'right') xOff = W - MR - totalW;
-
-      rendered.forEach(({f, w, sp}) => {
-        page.drawText(sp.text, {
-          x: xOff, y: yPos,
-          size: sp.size || size,
-          font: f,
-          color: sp.color || rgb(0.07,0.07,0.07)
+      function addPage() { page=doc.addPage([W,H]); yPos=H-MT; }
+      function drawLine(spans, size, align, bullet) {
+        if (yPos < MB+size+4) addPage();
+        var totalW=0;
+        var rendered=spans.map(function(sp){ var f=chooseFont(sp.bold,sp.italic); var w=f.widthOfTextAtSize(sp.text,size); totalW+=w; return{f:f,w:w,sp:sp}; });
+        var xOff=ML;
+        if (bullet) { page.drawText(bullet,{x:ML,y:yPos,size:size,font:fReg,color:rgb(.3,.3,.3)}); xOff=ML+fReg.widthOfTextAtSize(bullet,size)+2; totalW+=xOff-ML; }
+        if (align==='center') xOff=(W-totalW)/2;
+        else if (align==='right') xOff=W-MR-totalW;
+        rendered.forEach(function(r){ page.drawText(r.sp.text,{x:xOff,y:yPos,size:r.sp.size||size,font:r.f,color:r.sp.color||rgb(.07,.07,.07)}); xOff+=r.w; });
+        yPos -= size*1.6;
+      }
+      function wrapAndDraw(spans, size, align, bullet) {
+        if (!spans.length) { yPos-=size*1.2; return; }
+        var fullText=spans.map(function(s){return s.text;}).join('');
+        var words=fullText.split(' ');
+        var lineW=maxW-(bullet?fReg.widthOfTextAtSize(bullet,size)+4:0);
+        var line=''; var lines=[];
+        words.forEach(function(word){
+          var test=line?line+' '+word:word;
+          if (fReg.widthOfTextAtSize(test,size)>lineW&&line){lines.push(line);line=word;}
+          else line=test;
         });
-        xOff += w;
-      });
-
-      yPos -= size * 1.6;
-    }
-
-    function wrapAndDraw(spans, size, align, bullet) {
-      if (!spans.length) { yPos -= size * 1.2; return; }
-
-      // Unir todo el texto para calcular wrapping
-      const fullText = spans.map(s=>s.text).join('');
-      const words = fullText.split(' ');
-      const lineW = maxW - (bullet ? fReg.widthOfTextAtSize(bullet, size) + 4 : 0);
-
-      let line = '';
-      const lines = [];
-      for (const word of words) {
-        const test = line ? line + ' ' + word : word;
-        const w = fReg.widthOfTextAtSize(test, size);
-        if (w > lineW && line) { lines.push(line); line = word; }
-        else line = test;
+        if (line) lines.push(line);
+        lines.forEach(function(ln,i){ drawLine([Object.assign({},spans[0],{text:ln})],size,align,i===0?bullet:(bullet?'  ':null)); });
       }
-      if (line) lines.push(line);
 
-      // Repartir spans por líneas (simplificado: mismos estilos por párrafo)
-      lines.forEach((ln, i) => {
-        const lineSpans = [{...spans[0], text: ln}];
-        drawLine(lineSpans, size, align, i===0 ? bullet : (bullet ? '  ' : null));
+      // Parsear HTML clonado sin las imágenes flotantes
+      var tmp=document.createElement('div');
+      tmp.innerHTML=htmlCopy;
+      var imgWraps = tmp.querySelectorAll('.we-img-wrap');
+      imgWraps.forEach(function(el){ el.remove(); });
+
+      var blockTags=new Set(['P','DIV','H1','H2','H3','H4','H5','H6','LI','BLOCKQUOTE']);
+      function getBlocks(container) {
+        var blocks=[];
+        function newBlock(){blocks.push({spans:[],align:'left',size:12});}
+        function walk(node,fmt){
+          if(node.nodeType===3){var t=node.textContent;if(t&&t.trim()&&blocks.length)blocks[blocks.length-1].spans.push(Object.assign({text:t},fmt));return;}
+          var tag=node.tagName;if(!tag)return;
+          if(blockTags.has(tag)){newBlock();}
+          if(!blocks.length)newBlock();
+          var f=Object.assign({},fmt);
+          if(tag==='B'||tag==='STRONG')f.bold=true;
+          if(tag==='I'||tag==='EM')f.italic=true;
+          if(['H1','H2','H3'].includes(tag)){f.bold=true;f.size=tag==='H1'?22:tag==='H2'?18:14;}
+          if(tag==='LI'){blocks[blocks.length-1].bullet='• ';}
+          var sz=getFontSize(node);if(sz)f.size=sz;
+          var col=getColor(node);if(col)f.color=col;
+          var ta=node.style&&node.style.textAlign;if(ta)blocks[blocks.length-1].align=ta;
+          node.childNodes.forEach(function(ch){walk(ch,f);});
+          if(blockTags.has(tag))newBlock();
+        }
+        newBlock();
+        container.childNodes.forEach(function(ch){walk(ch,{bold:false,italic:false,size:12,color:rgb(.07,.07,.07)});});
+        return blocks.filter(function(b){return b.spans.length>0;});
+      }
+
+      var blocks=getBlocks(tmp);
+      blocks.forEach(function(block){
+        var size=block.spans[0]?block.spans[0].size||12:12;
+        wrapAndDraw(block.spans,size,block.align||'left',block.bullet||null);
       });
+
+      var bytes = await doc.save();
+
+      // Cerrar editor solo cuando el PDF está listo
+      closeWordEditor();
+      loading(false);
+
+      pdfRaw = bytes.buffer.slice(0);
+      var pdfjs = await pdfjsLib.getDocument({data: new Uint8Array(bytes)}).promise;
+      pdfDoc=pdfjs; totPages=pdfjs.numPages; curPage=1; paths=[]; activeSig=null; hideSel();
+      var p1 = await pdfDoc.getPage(1);
+      var vp = p1.getViewport({scale:1});
+      baseScale = scale = (mainEl.clientWidth - 28) / vp.width;
+      $('dz').style.display='none'; cw.style.display='block';
+      $('savebtn').style.display=''; $('dock').classList.add('on');
+      $('zfloat').classList.add('on');
+      updateNav();
+      await renderPage(1);
+      $('savename').value='mi-documento';
+      toast('Documento convertido a PDF ✓','ok');
+
+    } catch(e) {
+      loading(false);
+      console.error('weConvertToPDF error:', e);
+      toast('Error al convertir: ' + (e.message||String(e)), 'err');
     }
-
-    const blocks = getBlocks(tmp);
-    for (const block of blocks) {
-      const size = block.spans[0]?.size || 12;
-      const align = block.align || 'left';
-      wrapAndDraw(block.spans, size, align, block.bullet || null);
-    }
-
-    return doc.save();
-
-  }).then(bytes => {
-    loading(false);
-    pdfRaw = bytes.buffer.slice(0);
-    return pdfjsLib.getDocument({data: new Uint8Array(bytes)}).promise;
-  }).then(doc => {
-    pdfDoc=doc; totPages=doc.numPages; curPage=1; paths=[]; activeSig=null; hideSel();
-    return pdfDoc.getPage(1);
-  }).then(p1 => {
-    const vp = p1.getViewport({scale:1});
-    baseScale = scale = (mainEl.clientWidth - 28) / vp.width;
-    $('dz').style.display = 'none'; cw.style.display = 'block';
-    $('savebtn').style.display = ''; $('dock').classList.add('on');
-    $('zfloat').classList.add('on');
-    updateNav(); return renderPage(1);
-  }).then(() => {
-    loading(false);
-    $('savename').value = 'mi-documento';
-    toast('Documento convertido a PDF ✓', 'ok');
-  }).catch(e => { loading(false); toast('Error: ' + e.message, 'err'); console.error(e); });
+  })();
 }
+
+
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
